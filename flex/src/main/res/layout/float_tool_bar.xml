@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+    >
+
+  <LinearLayout
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      >
+
+    <ImageView
+        android:id="@+id/drag_area"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:clickable="true"
+        android:padding="8dp"
+        android:src="@drawable/ic_drag_area"
+        android:background="@color/grey2a"
+        />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/FloatView.Text"
+        android:text="debug"
+        />
+
+    <Button
+        android:id="@+id/reset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/FloatView.Text"
+        android:text="reset"
+        />
+
+    <Button
+        android:id="@+id/hide"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/FloatView.Text"
+        android:text="hide"
+        />
+
+
+  </LinearLayout>
+
+  <TextView
+      android:id="@+id/tv_loginfo"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:lines="5"
+      android:textColor="@color/black"
+      android:visibility="gone"
+      />
+</LinearLayout>
