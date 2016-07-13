@@ -54,6 +54,10 @@ public class ViewParser {
     }
   }
 
+  private static boolean isLayoutParams = false;
+
+  private static String debugName;
+
   private static void parseByte(byte[] bytes) throws IOException {
     mStream = new DataInputStream(new ByteArrayInputStream(bytes));
     boolean output = true;
@@ -64,7 +68,11 @@ public class ViewParser {
       if (readRes == SIG_SHORT) {
         name = readShort();
         if (name == SIG_END_MAP) {
-          L.d("end-------------------------->");
+          //if (isLayoutParams) {
+          //  isLayoutParams = false;
+          //  continue;
+          //}
+          L.e("end-------------------------->");
           result.add(mKeyValue);
           if (!stack.isEmpty()) {
             mKeyValue = stack.pop();
@@ -74,7 +82,7 @@ public class ViewParser {
           continue;
         }
       } else if (readRes == SIG_MAP) {
-        L.d("start-------------------------->");
+        L.e("start-------------------------->");
         stack.push(mKeyValue);
         mKeyValue = new HashMap<>();
         continue;
@@ -90,15 +98,29 @@ public class ViewParser {
         case SIG_SHORT:
           short readShort = readShort();
           mKeyValue.put(name, readShort + "");
+
           if (readShort == SIG_END_MAP) {
-            L.d("end-------------------------->");
+            L.e("end-------------------------->");
             result.add(mKeyValue);
             mKeyValue = stack.pop();
             output = false;
           }
           break;
         case SIG_STRING:
-          mKeyValue.put(name, readString() + "");
+          String viewClassName = readString();
+          if (viewClassName.contains("android")) {
+            String tmp = " ";
+            for (int i = 0; i < stack.size(); i++) {
+              tmp += "   ";
+            }
+            L.e(tmp + stack.size() + viewClassName);
+          }
+          //if (viewClassName.contains("$LayoutParams")) {
+          //  //L.e(viewClassName);
+          //  isLayoutParams = true;
+          //  mKeyValue = stack.pop();
+          //}
+          mKeyValue.put(name, viewClassName + "");
           break;
         case SIG_INT:
           mKeyValue.put(name, readInt() + "");
@@ -119,7 +141,7 @@ public class ViewParser {
           mKeyValue.put(name, readByte() + "");
           break;
         case SIG_MAP:
-          L.d("start-------------------------->");
+          L.e("start-------------------------->");
           stack.push(mKeyValue);
           mKeyValue = new HashMap<>();
           output = false;
@@ -128,7 +150,7 @@ public class ViewParser {
           mKeyValue.put(name, type + "");
       }
       if (output) {
-        L.e(name + "", " " + mKeyValue.get(name));
+        //L.e(name + "", " " + mKeyValue.get(name));
       } else {
         output = true;
       }

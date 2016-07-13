@@ -24,6 +24,7 @@
       android:layout_height="wrap_content"
       android:textSize="15sp"
       android:text="Hello World!"
+      android:visibility="gone"
       />
 
   <EditText
@@ -31,6 +32,7 @@
       android:layout_height="wrap_content"
       android:textSize="15sp"
       android:text="Hello World!"
+      android:visibility="gone"
       />
 
   <ImageView
@@ -39,12 +41,14 @@
       android:textSize="15sp"
       android:src="@drawable/ic_drag_area"
       android:background="@color/grey2a"
+      android:visibility="gone"
       />
 
   <LinearLayout
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:orientation="horizontal"
+      android:visibility="gone"
       >
 
     <TextView

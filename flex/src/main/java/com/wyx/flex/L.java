@@ -26,7 +26,7 @@ import java.io.IOException;
   private static boolean write2SdCard = false;
   private static int write2SdPriorityLevel = WRITE_TO_SD_PRIORITY_LEVEL;
 
-  private static boolean debug = false;
+  private static boolean debug = true;
 
   public static void setDebug(boolean debug) {
     L.debug = debug;
