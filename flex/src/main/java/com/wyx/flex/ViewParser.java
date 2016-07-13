@@ -63,7 +63,6 @@ public class ViewParser {
       int readRes = mStream.read();
       if (readRes == SIG_SHORT) {
         name = readShort();
-
         if (name == SIG_END_MAP) {
           L.d("end-------------------------->");
           result.add(mKeyValue);
@@ -72,7 +71,6 @@ public class ViewParser {
           } else {
             mKeyValue = null;
           }
-
           continue;
         }
       } else if (readRes == SIG_MAP) {

@@ -339,16 +339,16 @@ public class FloatTools {
   }
 
   private static List<View> getAllChildViews(View view) {
-    List<View> allchildren = new ArrayList<View>();
+    List<View> allChildren = new ArrayList<View>();
     if (view instanceof ViewGroup) {
       ViewGroup vp = (ViewGroup) view;
       for (int i = 0; i < vp.getChildCount(); i++) {
-        View viewchild = vp.getChildAt(i);
-        allchildren.add(viewchild);
-        allchildren.addAll(getAllChildViews(viewchild));
+        View viewChild = vp.getChildAt(i);
+        allChildren.add(viewChild);
+        allChildren.addAll(getAllChildViews(viewChild));
       }
     }
-    return allchildren;
+    return allChildren;
   }
 
   static class LogCatHandler extends Handler {
