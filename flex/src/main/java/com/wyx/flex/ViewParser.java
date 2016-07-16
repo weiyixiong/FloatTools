@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +38,9 @@ public class ViewParser {
   private static List<Map<Short, String>> result = new ArrayList<>();
   private static Map<String, Map<String, String>> mergeResult = new HashMap<>();
 
+  private static ViewDataNode root;
+  private static ViewDataNode currentNode;
+
   public static void parser(byte[] bytes) throws IOException {
     parseByte(bytes);
     mergeResult();
@@ -52,6 +56,23 @@ public class ViewParser {
       }
       mergeResult.put(shortStringMap.get((short) 2), tmp);
     }
+    mergeViewData(mKeyValue, root);
+  }
+
+  private static void mergeViewData(Map<Short, String> mKeyValue, ViewDataNode root) {
+    if (root.getOriginData() != null) {
+      Map<String, String> tmp = new HashMap<>();
+      for (Map.Entry<Short, String> shortStringEntry : root.getOriginData().entrySet()) {
+        tmp.put(mKeyValue.get(shortStringEntry.getKey()), shortStringEntry.getValue());
+      }
+      root.setData(tmp);
+    }
+
+    if (root.child != null) {
+      for (ViewDataNode viewDataNode : root.child) {
+        mergeViewData(mKeyValue, viewDataNode);
+      }
+    }
   }
 
   private static boolean isLayoutParams = false;
@@ -61,6 +82,9 @@ public class ViewParser {
   private static void parseByte(byte[] bytes) throws IOException {
     mStream = new DataInputStream(new ByteArrayInputStream(bytes));
     boolean output = true;
+    root = new ViewDataNode(null);
+    currentNode = root;
+
     while (mStream.available() != 0) {
       short name = 0;
 
@@ -68,12 +92,10 @@ public class ViewParser {
       if (readRes == SIG_SHORT) {
         name = readShort();
         if (name == SIG_END_MAP) {
-          //if (isLayoutParams) {
-          //  isLayoutParams = false;
-          //  continue;
-          //}
           L.e("end-------------------------->");
           result.add(mKeyValue);
+          currentNode.setOriginData(mKeyValue);
+          currentNode = currentNode.parent;
           if (!stack.isEmpty()) {
             mKeyValue = stack.pop();
           } else {
@@ -84,6 +106,11 @@ public class ViewParser {
       } else if (readRes == SIG_MAP) {
         L.e("start-------------------------->");
         stack.push(mKeyValue);
+
+        ViewDataNode viewDataNode = new ViewDataNode(currentNode);
+        currentNode.addChild(viewDataNode);
+        currentNode = viewDataNode;
+
         mKeyValue = new HashMap<>();
         continue;
       }
@@ -144,6 +171,9 @@ public class ViewParser {
           L.e("start-------------------------->");
           stack.push(mKeyValue);
           mKeyValue = new HashMap<>();
+          ViewDataNode viewDataNode = new ViewDataNode(currentNode);
+          currentNode.addChild(viewDataNode);
+          currentNode = viewDataNode;
           output = false;
           break;
         default:
