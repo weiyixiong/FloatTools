@@ -54,6 +54,7 @@ public class ViewParser {
       for (Map.Entry<Short, String> shortStringEntry : shortStringMap.entrySet()) {
         tmp.put(mKeyValue.get(shortStringEntry.getKey()), shortStringEntry.getValue());
       }
+      //use View's hashCode as keyFs
       mergeResult.put(shortStringMap.get((short) 2), tmp);
     }
     mergeViewData(mKeyValue, root);
@@ -142,11 +143,6 @@ public class ViewParser {
             }
             L.e(tmp + stack.size() + viewClassName);
           }
-          //if (viewClassName.contains("$LayoutParams")) {
-          //  //L.e(viewClassName);
-          //  isLayoutParams = true;
-          //  mKeyValue = stack.pop();
-          //}
           mKeyValue.put(name, viewClassName + "");
           break;
         case SIG_INT:
