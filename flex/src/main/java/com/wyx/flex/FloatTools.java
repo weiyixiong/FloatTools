@@ -73,11 +73,11 @@ public class FloatTools {
       }
 
       @Override public void onActivityStarted(Activity activity) {
-        instance.setAndDumpActivity(activity);
+
       }
 
       @Override public void onActivityResumed(Activity activity) {
-
+        instance.setAndDumpActivity(activity);
       }
 
       @Override public void onActivityPaused(Activity activity) {
@@ -101,7 +101,7 @@ public class FloatTools {
   private void setAndDumpActivity(Activity activity) {
     setupActivity(activity);
     createFloatView();
-    dumpView(activity);
+    //dumpView(activity);
   }
 
   public static FloatTools getInstance(Activity activity) {
@@ -230,7 +230,8 @@ public class FloatTools {
   @NonNull private View.OnClickListener getDragOnClickListener(final Activity activity) {
     return new View.OnClickListener() {
       @Override public void onClick(final View v) {
-        ViewGroup root = (ViewGroup) activity.getWindow().getDecorView().getRootView();
+        dumpView(activity);
+        ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
         List<View> allChildViews = getAllChildViews(activity);
         DragLayout parent = (DragLayout) root.findViewWithTag(TAG);
 
@@ -244,39 +245,39 @@ public class FloatTools {
         parent.removeAllViews();
 
         for (final View view : allChildViews) {
-          if (!(view instanceof ViewGroup)) {
-            ImageView tmp = new ImageView(activity);
-            FrameLayout.LayoutParams params =
-                new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            view.destroyDrawingCache();
-            view.buildDrawingCache();
-            tmp.setImageBitmap(view.getDrawingCache());
-            parent.addView(tmp);
-            int[] location = new int[2];
-            view.getLocationOnScreen(location);
-            params.topMargin = location[1];
-            params.leftMargin = location[0];
-            tmp.setLayoutParams(params);
-            tmp.setOnClickListener(new View.OnClickListener() {
-              @Override public void onClick(View v) {
-                view.callOnClick();
-              }
-            });
-            tmp.setOnLongClickListener(new View.OnLongClickListener() {
-              @Override public boolean onLongClick(View v) {
-                Navgation.startViewDetailActivity(activity, view.hashCode());
-                return true;
-              }
-            });
-          }
+          //if (!(view instanceof ViewGroup)) {
+          ImageView tmp = new ImageView(activity);
+          FrameLayout.LayoutParams params =
+              new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+          view.destroyDrawingCache();
+          view.buildDrawingCache();
+          tmp.setImageBitmap(view.getDrawingCache());
+          parent.addView(tmp);
+          int[] location = new int[2];
+          view.getLocationOnScreen(location);
+          params.topMargin = location[1];
+          params.leftMargin = location[0];
+          tmp.setLayoutParams(params);
+          tmp.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+              view.callOnClick();
+            }
+          });
+          tmp.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override public boolean onLongClick(View v) {
+              Navgation.startViewDetailActivity(activity, view.hashCode());
+              return true;
+            }
+          });
+          //}
         }
       }
     };
   }
 
   private void dumpView(Activity activity) {
-    ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
-    root = (ViewGroup) root.getChildAt(0);
+    ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();//.getRootView();
+    //root = (ViewGroup) root.getChildAt(0);
     File dumpDir = StorageUtils.getIndividualCacheDirectory(activity, "viewData");
     if (!dumpDir.exists()) {
       dumpDir.mkdirs();
@@ -296,8 +297,6 @@ public class FloatTools {
       //
       ////outputStream = new FileOutputStream(dump);
       //dispatch.invoke(null, root, stream);
-
-
 
       //BufferedReader reader = null;
       //reader = new BufferedReader(new FileReader(dump));

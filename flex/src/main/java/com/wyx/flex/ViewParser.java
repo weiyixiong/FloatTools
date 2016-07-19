@@ -105,7 +105,7 @@ public class ViewParser {
           if (!stack.isEmpty()) {
             mKeyValue = stack.pop();
           } else {
-            mKeyValue = null;
+            mKeyValue = new HashMap<>();//null;
           }
           continue;
         }
