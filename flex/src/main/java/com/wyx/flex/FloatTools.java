@@ -161,6 +161,7 @@ public class FloatTools {
         showFloatTools();
       }
     });
+    showFloatTools();
     mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
   }
 

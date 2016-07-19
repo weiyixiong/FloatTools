@@ -11,10 +11,10 @@ import java.util.Map;
  */
 public class ViewDataNode {
   List<ViewDataNode> child;
-  Map<String, ViewDataNode> children;
-  Map<Short, String> originData;
-  Map<String, String> data;
-  ViewDataNode parent;
+  private Map<String, ViewDataNode> children;
+  private Map<Short, String> originData;
+  private Map<String, String> data;
+  private ViewDataNode parent;
 
   public ViewDataNode(ViewDataNode parent) {
     this.parent = parent;
@@ -41,5 +41,9 @@ public class ViewDataNode {
       child = new ArrayList<>();
     }
     child.add(viewDataNode);
+  }
+
+  public ViewDataNode getParent() {
+    return parent;
   }
 }

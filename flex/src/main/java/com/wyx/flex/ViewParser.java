@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IllegalFormatCodePointException;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -64,6 +65,10 @@ public class ViewParser {
     if (root.getOriginData() != null) {
       Map<String, String> tmp = new HashMap<>();
       for (Map.Entry<Short, String> shortStringEntry : root.getOriginData().entrySet()) {
+        if (!mKeyValue.containsKey(shortStringEntry.getKey())) {
+          L.e(shortStringEntry.getValue());
+          //throw new RuntimeException("could not match key");
+        }
         tmp.put(mKeyValue.get(shortStringEntry.getKey()), shortStringEntry.getValue());
       }
       root.setData(tmp);
@@ -96,7 +101,7 @@ public class ViewParser {
           L.e("end-------------------------->");
           result.add(mKeyValue);
           currentNode.setOriginData(mKeyValue);
-          currentNode = currentNode.parent;
+          currentNode = currentNode.getParent();
           if (!stack.isEmpty()) {
             mKeyValue = stack.pop();
           } else {
@@ -189,14 +194,51 @@ public class ViewParser {
 
   public static List<Pair<String, String>> getViewInfo(String hashcode) {
     List<Pair<String, String>> res = new ArrayList<>();
-    Map<String, String> stringStringMap = mergeResult.get(hashcode);
-    if (stringStringMap == null) {
-      return null;
+    ViewDataNode node = findNode(hashcode, root);
+    Map<String, String> stringStringMap = node.getData();
+
+    for (ViewDataNode viewDataNode : node.child) {
+      if (viewDataNode.getData().get("meta:__name__").contains("$")) {
+        Map<String, String> data = viewDataNode.getData();
+        for (Map.Entry<String, String> stringStringEntry : data.entrySet()) {
+          res.add(new Pair<>(stringStringEntry.getKey(), stringStringEntry.getValue()));
+        }
+      }
     }
     for (Map.Entry<String, String> stringStringEntry : stringStringMap.entrySet()) {
       res.add(new Pair<>(stringStringEntry.getKey(), stringStringEntry.getValue()));
     }
     return res;
+
+    //List<Pair<String, String>> res = new ArrayList<>();
+    //Map<String, String> stringStringMap = mergeResult.get(hashcode);
+    //if (stringStringMap == null) {
+    //  return null;
+    //}
+    //for (Map.Entry<String, String> stringStringEntry : stringStringMap.entrySet()) {
+    //  res.add(new Pair<>(stringStringEntry.getKey(), stringStringEntry.getValue()));
+    //}
+    //return res;
+  }
+
+  public static ViewDataNode findNode(String hashcode, ViewDataNode root) {
+    if (root.child != null) {
+      for (ViewDataNode viewDataNode : root.child) {
+        if (viewDataNode.getData() != null && viewDataNode.getData().containsKey("meta:__hash__")) {
+          L.e(viewDataNode.getData().get("meta:__hash__"));
+        }
+
+        if (viewDataNode.getData() != null
+            && viewDataNode.getData().containsKey("meta:__hash__")
+            && viewDataNode.getData().get("meta:__hash__").equals(hashcode)) {
+          return viewDataNode;
+        } else {
+          ViewDataNode node = findNode(hashcode, viewDataNode);
+          if (node != null) return node;
+        }
+      }
+    }
+    return null;
   }
 
   private static byte readByte() {
