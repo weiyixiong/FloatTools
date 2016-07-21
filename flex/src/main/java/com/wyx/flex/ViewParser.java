@@ -224,9 +224,6 @@ public class ViewParser {
   public static ViewDataNode findNode(String hashcode, ViewDataNode root) {
     if (root.child != null) {
       for (ViewDataNode viewDataNode : root.child) {
-        if (viewDataNode.getData() != null && viewDataNode.getData().containsKey("meta:__hash__")) {
-          L.e(viewDataNode.getData().get("meta:__hash__"));
-        }
 
         if (viewDataNode.getData() != null
             && viewDataNode.getData().containsKey("meta:__hash__")

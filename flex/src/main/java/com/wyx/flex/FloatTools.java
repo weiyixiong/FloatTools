@@ -238,41 +238,82 @@ public class FloatTools {
         if (parent == null) {
           parent = new DragLayout(activity);
           parent.setTag(TAG);
-          root.addView(parent);
+          //root.addView(parent);
         }
 
         parent.setBackgroundColor(Color.WHITE);
         parent.removeAllViews();
+        addView(activity, parent, root, 0, 0);
 
-        for (final View view : allChildViews) {
-          //if (!(view instanceof ViewGroup)) {
-          ImageView tmp = new ImageView(activity);
-          FrameLayout.LayoutParams params =
-              new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-          view.destroyDrawingCache();
-          view.buildDrawingCache();
-          tmp.setImageBitmap(view.getDrawingCache());
-          parent.addView(tmp);
-          int[] location = new int[2];
-          view.getLocationOnScreen(location);
-          params.topMargin = location[1];
-          params.leftMargin = location[0];
-          tmp.setLayoutParams(params);
-          tmp.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) {
-              view.callOnClick();
-            }
-          });
-          tmp.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override public boolean onLongClick(View v) {
-              Navgation.startViewDetailActivity(activity, view.hashCode());
-              return true;
-            }
-          });
-          //}
-        }
+        root.addView(parent);
+        //
+        //for (final View view : allChildViews) {
+        //  //if (!(view instanceof ViewGroup)) {
+        //  ImageView tmp = new ImageView(activity);
+        //  FrameLayout.LayoutParams params =
+        //      new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        //  view.destroyDrawingCache();
+        //  view.buildDrawingCache();
+        //  tmp.setImageBitmap(view.getDrawingCache());
+        //  parent.addView(tmp);
+        //  int[] location = new int[2];
+        //  view.getLocationOnScreen(location);
+        //  params.topMargin = location[1];
+        //  params.leftMargin = location[0];
+        //  tmp.setLayoutParams(params);
+        //  tmp.setOnClickListener(new View.OnClickListener() {
+        //    @Override public void onClick(View v) {
+        //      view.callOnClick();
+        //    }
+        //  });
+        //  tmp.setOnLongClickListener(new View.OnLongClickListener() {
+        //    @Override public boolean onLongClick(View v) {
+        //      Navgation.startViewDetailActivity(activity, view.hashCode());
+        //      return true;
+        //    }
+        //  });
+        //  //}
+        //}
       }
     };
+  }
+
+  private void addView(final Activity activity, ViewGroup parent, ViewGroup origin, int top, int left) {
+    for (int i = 0; i < origin.getChildCount(); i++) {
+      final View view = origin.getChildAt(i);
+      L.e(view.getClass());
+      if (view instanceof ViewGroup) {
+        DragLayout frameLayout = new DragLayout(activity);
+        FrameLayout.LayoutParams params =
+            new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        int[] location = new int[2];
+        view.getLocationOnScreen(location);
+        params.topMargin = location[1] - top;
+        params.leftMargin = location[0] - left;
+        frameLayout.setLayoutParams(params);
+        parent.addView(frameLayout);
+        addView(activity, frameLayout, (ViewGroup) view, location[1], location[0]);
+      } else {
+        ImageView tmp = new ImageView(activity);
+        FrameLayout.LayoutParams params =
+            new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        view.destroyDrawingCache();
+        view.buildDrawingCache();
+        tmp.setImageBitmap(view.getDrawingCache());
+        parent.addView(tmp);
+        int[] location = new int[2];
+        view.getLocationOnScreen(location);
+        params.topMargin = location[1] - top;
+        params.leftMargin = location[0] - left;
+        tmp.setLayoutParams(params);
+        tmp.setOnLongClickListener(new View.OnLongClickListener() {
+          @Override public boolean onLongClick(View v) {
+            Navgation.startViewDetailActivity(activity, view.hashCode());
+            return true;
+          }
+        });
+      }
+    }
   }
 
   private void dumpView(Activity activity) {
@@ -337,6 +378,19 @@ public class FloatTools {
     View view = activity.getWindow().getDecorView();
     return getAllChildViews(view);
   }
+
+  //private static List<ViewGroup> getAllGroupView(View view) {
+  //  List<ViewGroup> allChildren = new ArrayList<>();
+  //  if (view instanceof ViewGroup) {
+  //    ViewGroup vp = (ViewGroup) view;
+  //    for (int i = 0; i < vp.getChildCount(); i++) {
+  //      View viewChild = vp.getChildAt(i);
+  //      allChildren.add(viewChild);
+  //      allChildren.addAll(getAllChildViews(viewChild));
+  //    }
+  //  }
+  //  return allChildren;
+  //}
 
   private static List<View> getAllChildViews(View view) {
     List<View> allChildren = new ArrayList<View>();
