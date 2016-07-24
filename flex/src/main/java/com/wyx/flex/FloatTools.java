@@ -284,8 +284,10 @@ public class FloatTools {
       L.e(view.getClass());
       if (view instanceof ViewGroup) {
         DragLayout frameLayout = new DragLayout(activity);
+        //FrameLayout.LayoutParams params =
+        //    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         FrameLayout.LayoutParams params =
-            new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            new FrameLayout.LayoutParams(view.getMeasuredWidth(), view.getMeasuredHeight());
         int[] location = new int[2];
         view.getLocationOnScreen(location);
         params.topMargin = location[1] - top;

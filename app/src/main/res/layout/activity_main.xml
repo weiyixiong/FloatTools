@@ -41,40 +41,39 @@
       android:background="@color/grey2a"
       />
 
-  <!--<LinearLayout-->
-  <!--android:layout_width="wrap_content"-->
-  <!--android:layout_height="wrap_content"-->
-  <!--android:orientation="horizontal"-->
-  <!--android:visibility="gone"-->
-  <!--&gt;-->
+  <LinearLayout
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:orientation="horizontal"
+      >
 
-  <!--<TextView-->
-  <!--android:text="Hello World!"-->
-  <!--android:layout_width="wrap_content"-->
-  <!--android:layout_height="wrap_content"-->
-  <!--android:textSize="15sp"-->
-  <!--/>-->
+    <TextView
+        android:text="Hello World!"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="15sp"
+        />
 
-  <!--<Button-->
-  <!--android:layout_width="wrap_content"-->
-  <!--android:layout_height="wrap_content"-->
-  <!--android:textSize="15sp"-->
-  <!--android:text="Hello World!"-->
-  <!--/>-->
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="15sp"
+        android:text="Hello World!"
+        />
 
-  <!--<EditText-->
-  <!--android:layout_width="wrap_content"-->
-  <!--android:layout_height="wrap_content"-->
-  <!--android:textSize="15sp"-->
-  <!--android:text="Hello World!"-->
-  <!--/>-->
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="15sp"
+        android:text="Hello World!"
+        />
 
-  <!--<ImageView-->
-  <!--android:layout_width="wrap_content"-->
-  <!--android:layout_height="wrap_content"-->
-  <!--android:textSize="15sp"-->
-  <!--android:src="@drawable/ic_drag_area"-->
-  <!--android:background="@color/grey2a"-->
-  <!--/>-->
-  <!--</LinearLayout>-->
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="15sp"
+        android:src="@drawable/ic_drag_area"
+        android:background="@color/grey2a"
+        />
+  </LinearLayout>
 </LinearLayout>
