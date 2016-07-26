@@ -1,6 +1,7 @@
 package com.wyx.flex;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.widget.ViewDragHelper;
 import android.view.MotionEvent;
@@ -58,7 +59,6 @@ public class DragLayout extends FrameLayout {
         params.leftMargin = left;
         params.topMargin = top;
         changedView.setLayoutParams(params);
-
         super.onViewPositionChanged(changedView, left, top, dx, dy);
       }
 
@@ -70,6 +70,11 @@ public class DragLayout extends FrameLayout {
         return getMeasuredHeight() - child.getMeasuredHeight();
       }
     });
+  }
+
+  @Override protected void dispatchDraw(Canvas canvas) {
+    super.dispatchDraw(canvas);
+    PaintUtil.drawBorder(this, canvas);
   }
 
   public boolean isHaveChildUnder(ViewGroup parent) {

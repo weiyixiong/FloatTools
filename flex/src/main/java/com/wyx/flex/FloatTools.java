@@ -296,7 +296,7 @@ public class FloatTools {
         parent.addView(frameLayout);
         addView(activity, frameLayout, (ViewGroup) view, location[1], location[0]);
       } else {
-        ImageView tmp = new ImageView(activity);
+        BorderImageView tmp = new BorderImageView(activity);
         FrameLayout.LayoutParams params =
             new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         view.destroyDrawingCache();
