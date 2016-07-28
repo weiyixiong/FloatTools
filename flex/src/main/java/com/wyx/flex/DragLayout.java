@@ -2,7 +2,10 @@ package com.wyx.flex;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Rect;
+import android.support.v4.view.LayoutInflaterCompat;
 import android.support.v4.view.MotionEventCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.ViewDragHelper;
 import android.view.MotionEvent;
 import android.view.View;
@@ -14,7 +17,7 @@ import android.widget.ImageView;
  * Created by winney on 16/5/11.
  */
 public class DragLayout extends FrameLayout {
-  ViewDragHelper dragHelper;
+  MyViewDragHelper dragHelper;
 
   private float x;
   private float y;
@@ -25,7 +28,7 @@ public class DragLayout extends FrameLayout {
   }
 
   private void initDragHelper() {
-    dragHelper = ViewDragHelper.create(this, new ViewDragHelper.Callback() {
+    dragHelper = MyViewDragHelper.create(this, new MyViewDragHelper.Callback() {
 
       @Override public int clampViewPositionHorizontal(View child, int left, int dx) {
         if (getPaddingLeft() > left) {
@@ -63,7 +66,16 @@ public class DragLayout extends FrameLayout {
       }
 
       @Override public boolean tryCaptureView(View child, int pointerId) {
-        return child instanceof ViewGroup == false;
+        return findBottomView(DragLayout.this, x, y) == child;
+        //boolean b = child instanceof ViewGroup == false || (isContainsView((ViewGroup) child)
+        //    && isHaveChildUnder((ViewGroup) child) == null);
+        //if (b) {
+        //  requestDisallowInterceptTouchEvent(true);
+        //} else {
+        //  requestDisallowInterceptTouchEvent(false);
+        //}
+        //return b;
+        //return true;
       }
 
       @Override public int getViewVerticalDragRange(View child) {
@@ -77,54 +89,48 @@ public class DragLayout extends FrameLayout {
     PaintUtil.drawBorder(this, canvas);
   }
 
-  public boolean isHaveChildUnder(ViewGroup parent) {
-    for (int i = 0; i < parent.getChildCount(); i++) {
-      View view = parent.getChildAt(i);
-      if (isInside(x, y, view)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public View findBottomChildUnder(View parent, float x, float y) {
-    ViewGroup viewGroup;
-    if (parent instanceof ViewGroup) {
-      viewGroup = (ViewGroup) parent;
-      final int childCount = viewGroup.getChildCount();
-      for (int i = childCount - 1; i >= 0; i--) {
-        final View child = viewGroup.getChildAt(i);
-        if (isInside(x, y, child)) {
-          if (child instanceof ViewGroup && ((ViewGroup) child).getChildCount() != 0) {
-            View bottomChildUnder = findBottomChildUnder(child, x, y);
-            if (isInside(x, y, bottomChildUnder)) {
-              return bottomChildUnder;
-            }
-            return parent;
-          } else {
-            return child;
-          }
-        }
-      }
-      return parent;
-    } else {
-      return null;
-    }
+  @Override public boolean dispatchTouchEvent(MotionEvent ev) {
+    return super.dispatchTouchEvent(ev);
   }
 
   private boolean isInside(float x, float y, View child) {
-    return x >= child.getLeft() && x < child.getRight() &&
-        y >= child.getTop() && y < child.getBottom();
+    Rect rect = new Rect();
+    child.getGlobalVisibleRect(rect);
+    if (x >= rect.left && x < rect.right &&
+        y >= rect.top && y < rect.bottom) {
+      L.e(child.getClass() + " " + rect.left + "  " + rect.right + "  " + rect.top + " " + rect.bottom);
+    }
+    return x >= rect.left && x < rect.right &&
+        y >= rect.top && y < rect.bottom;
   }
 
   @Override public boolean onTouchEvent(MotionEvent ev) {
     dragHelper.processTouchEvent(ev);
+    if (ev.getAction() == MotionEvent.ACTION_UP) dragHelper.abort();
     return false;
   }
 
+  public View findBottomView(ViewGroup viewGroup, float x, float y) {
+    for (int i = 0; i < viewGroup.getChildCount(); i++) {
+      View view = viewGroup.getChildAt(i);
+      if (isInside(x, y, view)) {
+        if (view instanceof ViewGroup && ((ViewGroup) view).getChildCount() != 0) {
+          return findBottomView((ViewGroup) view, x, y);
+        } else {
+          return view;
+        }
+      }
+    }
+    return viewGroup;
+  }
+
   @Override public boolean onInterceptTouchEvent(MotionEvent ev) {
-    x = ev.getX();
-    y = ev.getY();
+    x = ev.getRawX();
+    y = ev.getRawY();
+    //View haveChildUnder = findBottomView(this, x, y);
+    //if (haveChildUnder.getParent() != this) {
+    //  return false;
+    //}
     return dragHelper.shouldInterceptTouchEvent(ev);
   }
 }
