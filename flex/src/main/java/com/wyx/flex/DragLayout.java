@@ -17,7 +17,7 @@ import android.widget.ImageView;
  * Created by winney on 16/5/11.
  */
 public class DragLayout extends FrameLayout {
-  MyViewDragHelper dragHelper;
+  ViewDragHelper dragHelper;
 
   private float x;
   private float y;
@@ -28,7 +28,7 @@ public class DragLayout extends FrameLayout {
   }
 
   private void initDragHelper() {
-    dragHelper = MyViewDragHelper.create(this, new MyViewDragHelper.Callback() {
+    dragHelper = ViewDragHelper.create(this, new ViewDragHelper.Callback() {
 
       @Override public int clampViewPositionHorizontal(View child, int left, int dx) {
         if (getPaddingLeft() > left) {
