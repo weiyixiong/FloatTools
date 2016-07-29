@@ -502,6 +502,8 @@ public class MyViewDragHelper {
     mActivePointerId = INVALID_POINTER;
     clearMotionHistory();
 
+    //加入此代码解决在点击同一个Parent下另一个ViewGroup时导致无法接收Move事件的bug
+    setDragState(STATE_IDLE);
     if (mVelocityTracker != null) {
       mVelocityTracker.recycle();
       mVelocityTracker = null;

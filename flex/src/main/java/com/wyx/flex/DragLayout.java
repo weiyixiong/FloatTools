@@ -66,16 +66,7 @@ public class DragLayout extends FrameLayout {
       }
 
       @Override public boolean tryCaptureView(View child, int pointerId) {
-        return findBottomView(DragLayout.this, x, y) == child;
-        //boolean b = child instanceof ViewGroup == false || (isContainsView((ViewGroup) child)
-        //    && isHaveChildUnder((ViewGroup) child) == null);
-        //if (b) {
-        //  requestDisallowInterceptTouchEvent(true);
-        //} else {
-        //  requestDisallowInterceptTouchEvent(false);
-        //}
-        //return b;
-        //return true;
+        return true;//findBottomView(DragLayout.this, x, y) == child;
       }
 
       @Override public int getViewVerticalDragRange(View child) {
@@ -96,18 +87,14 @@ public class DragLayout extends FrameLayout {
   private boolean isInside(float x, float y, View child) {
     Rect rect = new Rect();
     child.getGlobalVisibleRect(rect);
-    if (x >= rect.left && x < rect.right &&
-        y >= rect.top && y < rect.bottom) {
-      L.e(child.getClass() + " " + rect.left + "  " + rect.right + "  " + rect.top + " " + rect.bottom);
-    }
     return x >= rect.left && x < rect.right &&
         y >= rect.top && y < rect.bottom;
   }
 
   @Override public boolean onTouchEvent(MotionEvent ev) {
     dragHelper.processTouchEvent(ev);
-    if (ev.getAction() == MotionEvent.ACTION_UP) dragHelper.abort();
-    return false;
+    //(|| findBottomView(this, x, y).getParent() == this) to enable ViewGroup receive ACTION_MOVE&ACTION_UP
+    return false || findBottomView(this, x, y).getParent() == this;
   }
 
   public View findBottomView(ViewGroup viewGroup, float x, float y) {
@@ -127,10 +114,11 @@ public class DragLayout extends FrameLayout {
   @Override public boolean onInterceptTouchEvent(MotionEvent ev) {
     x = ev.getRawX();
     y = ev.getRawY();
-    //View haveChildUnder = findBottomView(this, x, y);
-    //if (haveChildUnder.getParent() != this) {
-    //  return false;
-    //}
-    return dragHelper.shouldInterceptTouchEvent(ev);
+    View haveChildUnder = findBottomView(this, x, y);
+    if (haveChildUnder.getParent() != this) {
+      return false;
+    } else {
+      return dragHelper.shouldInterceptTouchEvent(ev);
+    }
   }
 }
