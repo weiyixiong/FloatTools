@@ -238,42 +238,15 @@ public class FloatTools {
         if (parent == null) {
           parent = new DragLayout(activity);
           parent.setTag(TAG);
-          //root.addView(parent);
         }
+        parent.removeAllViews();
+        root.removeView(parent);
 
         parent.setBackgroundColor(Color.WHITE);
         parent.removeAllViews();
         addView(activity, parent, root, 0, 0);
 
         root.addView(parent);
-        //
-        //for (final View view : allChildViews) {
-        //  //if (!(view instanceof ViewGroup)) {
-        //  ImageView tmp = new ImageView(activity);
-        //  FrameLayout.LayoutParams params =
-        //      new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        //  view.destroyDrawingCache();
-        //  view.buildDrawingCache();
-        //  tmp.setImageBitmap(view.getDrawingCache());
-        //  parent.addView(tmp);
-        //  int[] location = new int[2];
-        //  view.getLocationOnScreen(location);
-        //  params.topMargin = location[1];
-        //  params.leftMargin = location[0];
-        //  tmp.setLayoutParams(params);
-        //  tmp.setOnClickListener(new View.OnClickListener() {
-        //    @Override public void onClick(View v) {
-        //      view.callOnClick();
-        //    }
-        //  });
-        //  tmp.setOnLongClickListener(new View.OnLongClickListener() {
-        //    @Override public boolean onLongClick(View v) {
-        //      Navgation.startViewDetailActivity(activity, view.hashCode());
-        //      return true;
-        //    }
-        //  });
-        //  //}
-        //}
       }
     };
   }
@@ -284,8 +257,6 @@ public class FloatTools {
       L.e(view.getClass());
       if (view instanceof ViewGroup) {
         DragLayout frameLayout = new DragLayout(activity);
-        //FrameLayout.LayoutParams params =
-        //    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         FrameLayout.LayoutParams params =
             new FrameLayout.LayoutParams(view.getMeasuredWidth(), view.getMeasuredHeight());
         int[] location = new int[2];
@@ -318,9 +289,13 @@ public class FloatTools {
     }
   }
 
+  /**
+   * dump view info and parse it
+   *
+   * @param activity the activity you want to dump view
+   */
   private void dumpView(Activity activity) {
-    ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();//.getRootView();
-    //root = (ViewGroup) root.getChildAt(0);
+    ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
     File dumpDir = StorageUtils.getIndividualCacheDirectory(activity, "viewData");
     if (!dumpDir.exists()) {
       dumpDir.mkdirs();
@@ -328,31 +303,8 @@ public class FloatTools {
     File dump = new File(dumpDir.getAbsolutePath() + "/dump.txt");
     OutputStream outputStream = null;
     try {
-      //public static void dump(View root, boolean skipChildren, boolean includeProperties,
-      //OutputStream clientStream) throws IOException {
-      //}
-      //public static void dumpv2(@NonNull final View view, @NonNull ByteArrayOutputStream out)
       ByteArrayOutputStream stream = getByteArrayOutputStream(root);
       ViewParser.parser(stream.toByteArray());
-      //Method dispatch = ViewDebug.class.getDeclaredMethod("dumpv2", View.class,
-      //    ByteArrayOutputStream.class);//, boolean.class, OutputStream.class);
-      //dispatch.setAccessible(true);
-      //
-      ////outputStream = new FileOutputStream(dump);
-      //dispatch.invoke(null, root, stream);
-
-      //BufferedReader reader = null;
-      //reader = new BufferedReader(new FileReader(dump));
-      //String tempString = null;
-      //int line = 1;
-      //// 一次读入一行，直到读入null为文件结束
-      //while ((tempString = reader.readLine()) != null) {
-      //  // 显示行号
-      //  String str = "line " + line + ": " + tempString;
-      //  Log.e(TAG, str);
-      //  line++;
-      //}
-      //reader.close();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -380,19 +332,6 @@ public class FloatTools {
     View view = activity.getWindow().getDecorView();
     return getAllChildViews(view);
   }
-
-  //private static List<ViewGroup> getAllGroupView(View view) {
-  //  List<ViewGroup> allChildren = new ArrayList<>();
-  //  if (view instanceof ViewGroup) {
-  //    ViewGroup vp = (ViewGroup) view;
-  //    for (int i = 0; i < vp.getChildCount(); i++) {
-  //      View viewChild = vp.getChildAt(i);
-  //      allChildren.add(viewChild);
-  //      allChildren.addAll(getAllChildViews(viewChild));
-  //    }
-  //  }
-  //  return allChildren;
-  //}
 
   private static List<View> getAllChildViews(View view) {
     List<View> allChildren = new ArrayList<View>();
