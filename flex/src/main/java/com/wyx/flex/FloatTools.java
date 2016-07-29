@@ -101,7 +101,6 @@ public class FloatTools {
   private void setAndDumpActivity(Activity activity) {
     setupActivity(activity);
     createFloatView();
-    //dumpView(activity);
   }
 
   public static FloatTools getInstance(Activity activity) {
@@ -150,8 +149,8 @@ public class FloatTools {
         return false;
       }
     });
-    btnDebug.setOnClickListener(getDragOnClickListener(activity));
-    btnReset.setOnClickListener(getResetClickListener(activity));
+    btnDebug.setOnClickListener(buildDebugClickListener(activity));
+    btnReset.setOnClickListener(buildResetClickListener(activity));
 
     // ShakeDetector initialization
     mShakeDetector = new ShakeDetector();
@@ -206,7 +205,7 @@ public class FloatTools {
         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
   }
 
-  @NonNull private View.OnClickListener getResetClickListener(final Activity activity) {
+  @NonNull private View.OnClickListener buildResetClickListener(final Activity activity) {
     return new View.OnClickListener() {
       @Override public void onClick(View v) {
         Intent intent = new Intent();
@@ -227,7 +226,7 @@ public class FloatTools {
     };
   }
 
-  @NonNull private View.OnClickListener getDragOnClickListener(final Activity activity) {
+  @NonNull private View.OnClickListener buildDebugClickListener(final Activity activity) {
     return new View.OnClickListener() {
       @Override public void onClick(final View v) {
         dumpView(activity);
@@ -266,6 +265,12 @@ public class FloatTools {
         frameLayout.setLayoutParams(params);
         parent.addView(frameLayout);
         addView(activity, frameLayout, (ViewGroup) view, location[1], location[0]);
+        frameLayout.setOnLongClickListener(new View.OnLongClickListener() {
+          @Override public boolean onLongClick(View v) {
+            Navgation.startViewDetailActivity(activity, view.hashCode());
+            return true;
+          }
+        });
       } else {
         BorderImageView tmp = new BorderImageView(activity);
         FrameLayout.LayoutParams params =
@@ -310,6 +315,15 @@ public class FloatTools {
     }
   }
 
+  /**
+   * use reflection to call the ViewHierarchyEncoder and dump view as Stream
+   *
+   * @throws ClassNotFoundException
+   * @throws NoSuchMethodException
+   * @throws InstantiationException
+   * @throws IllegalAccessException
+   * @throws java.lang.reflect.InvocationTargetException
+   */
   @NonNull private ByteArrayOutputStream getByteArrayOutputStream(ViewGroup root)
       throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException,
       java.lang.reflect.InvocationTargetException {

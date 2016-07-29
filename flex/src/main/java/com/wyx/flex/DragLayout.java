@@ -9,7 +9,9 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.ViewDragHelper;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
@@ -31,25 +33,25 @@ public class DragLayout extends FrameLayout {
     dragHelper = ViewDragHelper.create(this, new ViewDragHelper.Callback() {
 
       @Override public int clampViewPositionHorizontal(View child, int left, int dx) {
-        if (getPaddingLeft() > left) {
-          return getPaddingLeft();
-        }
-
-        if (getWidth() - child.getWidth() < left) {
-          return getWidth() - child.getWidth();
-        }
+        //if (getPaddingLeft() > left) {
+        //  return getPaddingLeft();
+        //}
+        //
+        //if (getWidth() - child.getWidth() < left) {
+        //  return getWidth() - child.getWidth();
+        //}
 
         return left;
       }
 
       @Override public int clampViewPositionVertical(View child, int top, int dy) {
-        if (getPaddingTop() > top) {
-          return getPaddingTop();
-        }
-
-        if (getHeight() - child.getHeight() < top) {
-          return getHeight() - child.getHeight();
-        }
+        //if (getPaddingTop() > top) {
+        //  return getPaddingTop();
+        //}
+        //
+        //if (getHeight() - child.getHeight() < top) {
+        //  return getHeight() - child.getHeight();
+        //}
         return top;
       }
 
@@ -62,11 +64,10 @@ public class DragLayout extends FrameLayout {
         params.leftMargin = left;
         params.topMargin = top;
         changedView.setLayoutParams(params);
-        super.onViewPositionChanged(changedView, left, top, dx, dy);
       }
 
       @Override public boolean tryCaptureView(View child, int pointerId) {
-        return true;//findBottomView(DragLayout.this, x, y) == child;
+        return true;
       }
 
       @Override public int getViewVerticalDragRange(View child) {
@@ -92,9 +93,10 @@ public class DragLayout extends FrameLayout {
   }
 
   @Override public boolean onTouchEvent(MotionEvent ev) {
+    super.onTouchEvent(ev);
     dragHelper.processTouchEvent(ev);
-    //(|| findBottomView(this, x, y).getParent() == this) to enable ViewGroup receive ACTION_MOVE&ACTION_UP
-    return false || findBottomView(this, x, y).getParent() == this;
+    final ViewGroup parent = (ViewGroup) findBottomView(this, x, y).getParent();
+    return false || parent == this;
   }
 
   public View findBottomView(ViewGroup viewGroup, float x, float y) {
