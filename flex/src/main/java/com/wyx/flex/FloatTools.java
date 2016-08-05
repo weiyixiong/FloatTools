@@ -53,7 +53,8 @@ public class FloatTools {
   private WindowManager mWindowManager;
   private Button btnDebug;
   private Button btnReset;
-  private Button bthHide;
+  private Button btnHide;
+  private Button btnLogcat;
   private ImageView dragArea;
   private TextView logInfo;
   private WeakReference<Activity> currentActivity;
@@ -194,11 +195,23 @@ public class FloatTools {
     mFloatLayout = (LinearLayout) inflater.inflate(R.layout.float_tool_bar, null);
     btnDebug = (Button) mFloatLayout.findViewById(R.id.button);
     btnReset = (Button) mFloatLayout.findViewById(R.id.reset);
-    bthHide = (Button) mFloatLayout.findViewById(R.id.hide);
+    btnHide = (Button) mFloatLayout.findViewById(R.id.hide);
+    btnLogcat = (Button) mFloatLayout.findViewById(R.id.logcat);
     dragArea = (ImageView) mFloatLayout.findViewById(R.id.drag_area);
     logInfo = (TextView) mFloatLayout.findViewById(R.id.tv_loginfo);
     logInfo.setMovementMethod(new ScrollingMovementMethod());
     startLogCat();
+
+    btnLogcat.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if (logInfo.isShown()) {
+          logInfo.setVisibility(View.GONE);
+        } else {
+          logInfo.setVisibility(View.VISIBLE);
+        }
+      }
+    });
     logInfo.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -206,7 +219,7 @@ public class FloatTools {
       }
     });
 
-    bthHide.setOnClickListener(new View.OnClickListener() {
+    btnHide.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
         mWindowManager.removeView(mFloatLayout);

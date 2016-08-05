@@ -29,7 +29,7 @@ public class LogCatActivity extends Activity {
 
   private void startLogCat() {
     handler = new LogCatHandler(logcat);
-    handler.sendEmptyMessageDelayed(1, TIME_SCHEDULE);
+    handler.sendEmptyMessageDelayed(1, 0);
   }
 
   static class LogCatHandler extends Handler {

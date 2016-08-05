@@ -5,10 +5,8 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.IllegalFormatCodePointException;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -188,46 +186,41 @@ public class ViewParser {
     }
   }
 
-  public static List<Pair<String, String>> getViewInfo(int hashcode) {
+  public static Map<String, List<Pair<String, String>>> getViewInfo(int hashcode) {
     return getViewInfo(hashcode + "");
   }
 
-  public static List<Pair<String, String>> getViewInfo(String hashcode) {
-    List<Pair<String, String>> res = new ArrayList<>();
+  public static Map<String, List<Pair<String, String>>> getViewInfo(String hashcode) {
+    Map<String, List<Pair<String, String>>> res = new HashMap();
+
     ViewDataNode node = findNode(hashcode, root);
     Map<String, String> stringStringMap = node.getData();
 
     for (ViewDataNode viewDataNode : node.child) {
-      if (viewDataNode.getData().get("meta:__name__").contains("$")) {
+      String name = viewDataNode.getData().get("meta:__name__");
+      if (name.contains("$")) {
+        List<Pair<String, String>> tmp = new ArrayList<>();
         Map<String, String> data = viewDataNode.getData();
         for (Map.Entry<String, String> stringStringEntry : data.entrySet()) {
-          res.add(new Pair<>(stringStringEntry.getKey(), stringStringEntry.getValue()));
+          tmp.add(new Pair<>(stringStringEntry.getKey(), stringStringEntry.getValue()));
         }
+        res.put(name, tmp);
       }
     }
+    List<Pair<String, String>> tmp = new ArrayList<>();
     for (Map.Entry<String, String> stringStringEntry : stringStringMap.entrySet()) {
-      res.add(new Pair<>(stringStringEntry.getKey(), stringStringEntry.getValue()));
+      tmp.add(new Pair<>(stringStringEntry.getKey(), stringStringEntry.getValue()));
     }
+    res.put("Field", tmp);
     return res;
-
-    //List<Pair<String, String>> res = new ArrayList<>();
-    //Map<String, String> stringStringMap = mergeResult.get(hashcode);
-    //if (stringStringMap == null) {
-    //  return null;
-    //}
-    //for (Map.Entry<String, String> stringStringEntry : stringStringMap.entrySet()) {
-    //  res.add(new Pair<>(stringStringEntry.getKey(), stringStringEntry.getValue()));
-    //}
-    //return res;
   }
 
   public static ViewDataNode findNode(String hashcode, ViewDataNode root) {
     if (root.child != null) {
       for (ViewDataNode viewDataNode : root.child) {
 
-        if (viewDataNode.getData() != null
-            && viewDataNode.getData().containsKey("meta:__hash__")
-            && viewDataNode.getData().get("meta:__hash__").equals(hashcode)) {
+        if (viewDataNode.getData() != null && viewDataNode.getData().containsKey("meta:__hash__") &&
+            viewDataNode.getData().get("meta:__hash__").equals(hashcode)) {
           return viewDataNode;
         } else {
           ViewDataNode node = findNode(hashcode, viewDataNode);
