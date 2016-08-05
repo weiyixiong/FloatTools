@@ -54,6 +54,5 @@
       android:layout_height="wrap_content"
       android:lines="5"
       android:textColor="@color/black"
-      android:visibility="gone"
       />
 </LinearLayout>

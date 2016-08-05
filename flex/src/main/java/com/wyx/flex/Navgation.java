@@ -13,4 +13,9 @@ public class Navgation {
     DetailInfoActivity.putExtra(intent, hashCode);
     activity.startActivity(intent);
   }
+
+  public static void startLogCatActivity(Activity activity) {
+    Intent intent = new Intent(activity, LogCatActivity.class);
+    activity.startActivity(intent);
+  }
 }

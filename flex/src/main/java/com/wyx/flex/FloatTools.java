@@ -33,6 +33,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by winney on 16/4/28.
@@ -68,31 +70,38 @@ public class FloatTools {
     mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
     application.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
-      @Override public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+      @Override
+      public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
 
       }
 
-      @Override public void onActivityStarted(Activity activity) {
+      @Override
+      public void onActivityStarted(Activity activity) {
 
       }
 
-      @Override public void onActivityResumed(Activity activity) {
+      @Override
+      public void onActivityResumed(Activity activity) {
         instance.setAndDumpActivity(activity);
       }
 
-      @Override public void onActivityPaused(Activity activity) {
+      @Override
+      public void onActivityPaused(Activity activity) {
 
       }
 
-      @Override public void onActivityStopped(Activity activity) {
+      @Override
+      public void onActivityStopped(Activity activity) {
 
       }
 
-      @Override public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+      @Override
+      public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
 
       }
 
-      @Override public void onActivityDestroyed(Activity activity) {
+      @Override
+      public void onActivityDestroyed(Activity activity) {
 
       }
     });
@@ -135,7 +144,8 @@ public class FloatTools {
       initFloatView(activity);
     }
     dragArea.setOnTouchListener(new View.OnTouchListener() {
-      @Override public boolean onTouch(View v, MotionEvent event) {
+      @Override
+      public boolean onTouch(View v, MotionEvent event) {
         if (touchDownPoint == null) {
           touchDownPoint = new Point();
         }
@@ -156,7 +166,8 @@ public class FloatTools {
     mShakeDetector = new ShakeDetector();
     mShakeDetector.setOnShakeListener(new ShakeDetector.OnShakeListener() {
 
-      @Override public void onShake(int count) {
+      @Override
+      public void onShake(int count) {
         showFloatTools();
       }
     });
@@ -164,7 +175,7 @@ public class FloatTools {
     mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
   }
 
-  private void initFloatView(Activity activity) {
+  private void initFloatView(final Activity activity) {
     wmParams = new WindowManager.LayoutParams();
     mWindowManager =
         (WindowManager) activity.getApplication().getSystemService(activity.getApplication().WINDOW_SERVICE);
@@ -185,16 +196,17 @@ public class FloatTools {
     bthHide = (Button) mFloatLayout.findViewById(R.id.hide);
     dragArea = (ImageView) mFloatLayout.findViewById(R.id.drag_area);
     logInfo = (TextView) mFloatLayout.findViewById(R.id.tv_loginfo);
+    startLogCat();
+    logInfo.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Navgation.startLogCatActivity(activity);
+      }
+    });
 
-    handler = new LogCatHandler(logInfo);
-    //new Timer().schedule(new TimerTask() {
-    //  @Override public void run() {
-    //    handler.sendEmptyMessageDelayed(1, 500);
-    //  }
-    //}, 0, 500);
-    //handler.sendMessageDelayed(msg, 1000);
     bthHide.setOnClickListener(new View.OnClickListener() {
-      @Override public void onClick(View v) {
+      @Override
+      public void onClick(View v) {
         mWindowManager.removeView(mFloatLayout);
         floatViewStatus = View.INVISIBLE;
         btnReset.performClick();
@@ -202,12 +214,24 @@ public class FloatTools {
     });
 
     mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
   }
 
-  @NonNull private View.OnClickListener buildResetClickListener(final Activity activity) {
+  private void startLogCat() {
+    handler = new LogCatHandler(logInfo);
+    new Timer().schedule(new TimerTask() {
+      @Override
+      public void run() {
+        handler.sendEmptyMessageDelayed(1, 500);
+      }
+    }, 0, 500);
+  }
+
+  @NonNull
+  private View.OnClickListener buildResetClickListener(final Activity activity) {
     return new View.OnClickListener() {
-      @Override public void onClick(View v) {
+      @Override
+      public void onClick(View v) {
         Intent intent = new Intent();
         intent.setAction(RESET);
         application.sendBroadcast(intent);
@@ -226,9 +250,11 @@ public class FloatTools {
     };
   }
 
-  @NonNull private View.OnClickListener buildDebugClickListener(final Activity activity) {
+  @NonNull
+  private View.OnClickListener buildDebugClickListener(final Activity activity) {
     return new View.OnClickListener() {
-      @Override public void onClick(final View v) {
+      @Override
+      public void onClick(final View v) {
         dumpView(activity);
         ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
         List<View> allChildViews = getAllChildViews(activity);
@@ -266,7 +292,8 @@ public class FloatTools {
         parent.addView(frameLayout);
         addView(activity, frameLayout, (ViewGroup) view, location[1], location[0]);
         frameLayout.setOnLongClickListener(new View.OnLongClickListener() {
-          @Override public boolean onLongClick(View v) {
+          @Override
+          public boolean onLongClick(View v) {
             Navgation.startViewDetailActivity(activity, view.hashCode());
             return true;
           }
@@ -285,7 +312,8 @@ public class FloatTools {
         params.leftMargin = location[0] - left;
         tmp.setLayoutParams(params);
         tmp.setOnLongClickListener(new View.OnLongClickListener() {
-          @Override public boolean onLongClick(View v) {
+          @Override
+          public boolean onLongClick(View v) {
             Navgation.startViewDetailActivity(activity, view.hashCode());
             return true;
           }
@@ -324,9 +352,10 @@ public class FloatTools {
    * @throws IllegalAccessException
    * @throws java.lang.reflect.InvocationTargetException
    */
-  @NonNull private ByteArrayOutputStream getByteArrayOutputStream(ViewGroup root)
+  @NonNull
+  private ByteArrayOutputStream getByteArrayOutputStream(ViewGroup root)
       throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException,
-      java.lang.reflect.InvocationTargetException {
+             java.lang.reflect.InvocationTargetException {
     ByteArrayOutputStream stream = new ByteArrayOutputStream(32 * 1024);
     Class<?> viewHierarchyEncoder = Class.forName("android.view.ViewHierarchyEncoder");
     Constructor viewDumpCon = viewHierarchyEncoder.getConstructor(ByteArrayOutputStream.class);
@@ -367,27 +396,17 @@ public class FloatTools {
       this.textView = textView;
     }
 
-    @Override public void handleMessage(Message msg) {
+    @Override
+    public void handleMessage(Message msg) {
       super.handleMessage(msg);
       if (msg.what == 0) {
         if (msg.obj != null) {
           ((Runnable) msg.obj).run();
         }
-        //  Message msg1 = new Message();
-        //  msg1.what = 1;
-        //  Bundle data = new Bundle();
-        //  try {
-        //    data.putString("log", LogCatUtil.getLogcatInfo());
-        //  } catch (IOException e) {
-        //    e.printStackTrace();
-        //  }
-        //  msg1.setData(data);
-        //  sendMessageDelayed(msg1, 500);
-        //} else {
-        //  textView.setText(msg.getData().getString("log"));
       } else {
         try {
-          textView.setText(LogCatUtil.getLogcatInfo());
+          String logcatInfo = LogCatUtil.getLogcatInfo();
+          textView.setText(LogCatUtil.getCacheLog());
         } catch (IOException e) {
           e.printStackTrace();
         }
