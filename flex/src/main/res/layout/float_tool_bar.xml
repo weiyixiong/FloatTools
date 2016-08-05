@@ -52,7 +52,9 @@
       android:id="@+id/tv_loginfo"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:lines="5"
+      android:maxLines="10"
+      android:scrollbars="vertical"
       android:textColor="@color/black"
       />
+
 </LinearLayout>

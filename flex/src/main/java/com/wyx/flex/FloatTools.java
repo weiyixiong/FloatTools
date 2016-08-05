@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.text.method.ScrollingMovementMethod;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -196,6 +197,7 @@ public class FloatTools {
     bthHide = (Button) mFloatLayout.findViewById(R.id.hide);
     dragArea = (ImageView) mFloatLayout.findViewById(R.id.drag_area);
     logInfo = (TextView) mFloatLayout.findViewById(R.id.tv_loginfo);
+    logInfo.setMovementMethod(new ScrollingMovementMethod());
     startLogCat();
     logInfo.setOnClickListener(new View.OnClickListener() {
       @Override

@@ -6,8 +6,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.widget.TextView;
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * @author winney E-mail: weiyixiong@tigerbrokers.com
@@ -17,6 +15,8 @@ import java.util.TimerTask;
 public class LogCatActivity extends Activity {
   TextView logcat;
   private static Handler handler;
+
+  public static final int TIME_SCHEDULE = 1500;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -29,12 +29,7 @@ public class LogCatActivity extends Activity {
 
   private void startLogCat() {
     handler = new LogCatHandler(logcat);
-    new Timer().schedule(new TimerTask() {
-      @Override
-      public void run() {
-        handler.sendEmptyMessageDelayed(1, 500);
-      }
-    }, 0, 500);
+    handler.sendEmptyMessageDelayed(1, TIME_SCHEDULE);
   }
 
   static class LogCatHandler extends Handler {
@@ -47,17 +42,12 @@ public class LogCatActivity extends Activity {
     @Override
     public void handleMessage(Message msg) {
       super.handleMessage(msg);
-      if (msg.what == 0) {
-        if (msg.obj != null) {
-          ((Runnable) msg.obj).run();
-        }
-      } else {
-        try {
-          LogCatUtil.getLogcatInfo();
-          textView.setText(LogCatUtil.getCacheLog());
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
+      try {
+        LogCatUtil.getLogcatInfo();
+        textView.setText(LogCatUtil.getCacheLog());
+        handler.sendEmptyMessageDelayed(1, TIME_SCHEDULE);
+      } catch (IOException e) {
+        e.printStackTrace();
       }
     }
   }

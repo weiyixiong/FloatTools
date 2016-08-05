@@ -16,7 +16,10 @@
       android:supportsRtl="true"
       >
     <activity android:name=".DetailInfoActivity" />
-    <activity android:name=".LogCatActivity" />
+    <activity
+        android:name=".LogCatActivity"
+        android:launchMode="singleInstance"
+        />
 
   </application>
 
