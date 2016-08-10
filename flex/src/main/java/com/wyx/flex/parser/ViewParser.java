@@ -1,6 +1,7 @@
-package com.wyx.flex;
+package com.wyx.flex.parser;
 
 import android.util.Pair;
+import com.wyx.flex.util.L;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -29,7 +30,8 @@ public class ViewParser {
 
   private static final byte SIG_MAP = 'M'; //77 a map with an short key
   private static final short SIG_END_MAP = 0;
-  private static Map<Short, String> mKeyValue = new HashMap<>(200);
+  private static Map<Short, String> mKeyValue =
+new HashMap<>(200);
   private static DataInputStream mStream;
   private static Charset mCharset = Charset.forName("utf-8");
 

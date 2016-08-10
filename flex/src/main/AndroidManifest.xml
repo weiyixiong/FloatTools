@@ -15,9 +15,9 @@
       android:label="@string/app_name"
       android:supportsRtl="true"
       >
-    <activity android:name=".DetailInfoActivity" />
+    <activity android:name=".activity.DetailInfoActivity" />
     <activity
-        android:name=".LogCatActivity"
+        android:name=".activity.LogCatActivity"
         android:launchMode="singleInstance"
         />
 

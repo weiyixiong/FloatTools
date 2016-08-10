@@ -1,19 +1,14 @@
-package com.wyx.flex;
+package com.wyx.flex.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
-import android.support.v4.view.LayoutInflaterCompat;
-import android.support.v4.view.MotionEventCompat;
-import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.ViewDragHelper;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
+import com.wyx.flex.util.PaintUtil;
 
 /**
  * Created by winney on 16/5/11.

@@ -1,6 +1,5 @@
-package com.wyx.flex;
+package com.wyx.flex.parser;
 
-import android.view.View;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +30,6 @@ public class ViewDataNode {
   public void setOriginData(Map<Short, String> originData) {
     this.originData = originData;
   }
-
   public Map<Short, String> getOriginData() {
     return originData;
   }

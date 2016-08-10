@@ -1,8 +1,10 @@
-package com.wyx.flex;
+package com.wyx.flex.activity;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.widget.TextView;
+import com.wyx.flex.util.LogCatUtil;
+import com.wyx.flex.R;
 
 /**
  * @author winney E-mail: weiyixiong@tigerbrokers.com

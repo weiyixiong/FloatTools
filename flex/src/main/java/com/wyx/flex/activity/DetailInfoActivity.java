@@ -1,4 +1,4 @@
-package com.wyx.flex;
+package com.wyx.flex.activity;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -14,6 +14,9 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.wyx.flex.FloatTools;
+import com.wyx.flex.R;
+import com.wyx.flex.parser.ViewParser;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;

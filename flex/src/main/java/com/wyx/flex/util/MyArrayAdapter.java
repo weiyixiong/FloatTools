@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.wyx.flex;
+package com.wyx.flex.util;
 
 import android.content.Context;
 import android.util.Log;

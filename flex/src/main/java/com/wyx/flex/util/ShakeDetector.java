@@ -1,4 +1,4 @@
-package com.wyx.flex;
+package com.wyx.flex.util;
 
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;

@@ -3,7 +3,7 @@
 // (powered by Fernflower decompiler)
 //
 
-package com.wyx.flex;
+package com.wyx.flex.util;
 
 import android.content.Context;
 import android.os.Environment;
