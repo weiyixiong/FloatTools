@@ -1,10 +1,13 @@
 package com.wyx.flex;
 
+import android.os.Handler;
+import android.os.Message;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 
 /**
@@ -12,7 +15,7 @@ import java.util.Queue;
  */
 public class LogCatUtil {
   private static final int LIMIT_LINE = 100;
-
+  public static final int TIME_SCHEDULE = 1000;
   static Queue<String> cache = new ArrayDeque<>();
 
   static ArrayList<String> commandLine = new ArrayList<String>();
@@ -59,5 +62,42 @@ public class LogCatUtil {
       res.append(s).append("\n");
     }
     return res.toString();
+  }
+
+  public static void addUpdateListener(LogcatUpdateListener logcatUpdateListener) {
+    if (handler == null) {
+      handler = new InnerLogCatHandler();
+    }
+    if (!handler.hasMessages(1)) {
+      handler.sendEmptyMessageDelayed(1, TIME_SCHEDULE);
+    }
+    logcatUpdateListeners.add(logcatUpdateListener);
+  }
+
+  public interface LogcatUpdateListener {
+    void onUpdate(String log);
+  }
+
+  private static List<LogcatUpdateListener> logcatUpdateListeners = new ArrayList<>();
+  private static InnerLogCatHandler handler;
+
+  private static class InnerLogCatHandler extends Handler {
+
+    @Override
+    public void handleMessage(Message msg) {
+      super.handleMessage(msg);
+      try {
+        LogCatUtil.getLogcatInfo();
+        String cacheLog = LogCatUtil.getCacheLog();
+        for (LogcatUpdateListener logcatUpdateListener : logcatUpdateListeners) {
+          logcatUpdateListener.onUpdate(cacheLog);
+        }
+        if (logcatUpdateListeners.size() != 0) {
+          sendEmptyMessageDelayed(1, TIME_SCHEDULE);
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
   }
 }

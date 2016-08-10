@@ -55,14 +55,21 @@
 
   </LinearLayout>
 
-  <TextView
-      android:id="@+id/tv_loginfo"
+  <ScrollView
+      android:id="@+id/tv_loginfo_wrapper"
       android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:maxLines="10"
-      android:scrollbars="vertical"
-      android:textColor="@color/black"
-      android:visibility="gone"
-      />
+      android:layout_height="200dp"
+      >
+
+    <TextView
+        android:id="@+id/tv_loginfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="vertical"
+        android:textColor="@color/black"
+        />
+
+  </ScrollView>
+
 
 </LinearLayout>

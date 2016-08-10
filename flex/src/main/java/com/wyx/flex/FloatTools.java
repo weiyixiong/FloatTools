@@ -10,10 +10,7 @@ import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.NonNull;
-import android.text.method.ScrollingMovementMethod;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -24,18 +21,16 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Created by winney on 16/4/28.
@@ -48,7 +43,6 @@ public class FloatTools {
   private static Application application;
 
   private static LinearLayout mFloatLayout;
-  private static Handler handler;
   private WindowManager.LayoutParams wmParams;
   private WindowManager mWindowManager;
   private Button btnDebug;
@@ -57,6 +51,7 @@ public class FloatTools {
   private Button btnLogcat;
   private ImageView dragArea;
   private TextView logInfo;
+  private ScrollView logCatWrapper;
   private WeakReference<Activity> currentActivity;
   private static FloatTools instance;
   private Point touchDownPoint;
@@ -199,16 +194,16 @@ public class FloatTools {
     btnLogcat = (Button) mFloatLayout.findViewById(R.id.logcat);
     dragArea = (ImageView) mFloatLayout.findViewById(R.id.drag_area);
     logInfo = (TextView) mFloatLayout.findViewById(R.id.tv_loginfo);
-    logInfo.setMovementMethod(new ScrollingMovementMethod());
+    logCatWrapper = (ScrollView) mFloatLayout.findViewById(R.id.tv_loginfo_wrapper);
     startLogCat();
 
     btnLogcat.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
         if (logInfo.isShown()) {
-          logInfo.setVisibility(View.GONE);
+          logCatWrapper.setVisibility(View.GONE);
         } else {
-          logInfo.setVisibility(View.VISIBLE);
+          logCatWrapper.setVisibility(View.VISIBLE);
         }
       }
     });
@@ -233,13 +228,17 @@ public class FloatTools {
   }
 
   private void startLogCat() {
-    handler = new LogCatHandler(logInfo);
-    new Timer().schedule(new TimerTask() {
+    LogCatUtil.addUpdateListener(new LogCatUtil.LogcatUpdateListener() {
       @Override
-      public void run() {
-        handler.sendEmptyMessageDelayed(1, 500);
+      public void onUpdate(final String log) {
+        logInfo.post(new Runnable() {
+          @Override
+          public void run() {
+            logInfo.setText(log);
+          }
+        });
       }
-    }, 0, 500);
+    });
   }
 
   @NonNull
@@ -402,30 +401,5 @@ public class FloatTools {
       }
     }
     return allChildren;
-  }
-
-  static class LogCatHandler extends Handler {
-    TextView textView;
-
-    public LogCatHandler(TextView textView) {
-      this.textView = textView;
-    }
-
-    @Override
-    public void handleMessage(Message msg) {
-      super.handleMessage(msg);
-      if (msg.what == 0) {
-        if (msg.obj != null) {
-          ((Runnable) msg.obj).run();
-        }
-      } else {
-        try {
-          String logcatInfo = LogCatUtil.getLogcatInfo();
-          textView.setText(LogCatUtil.getCacheLog());
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
-    }
   }
 }

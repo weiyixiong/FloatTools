@@ -2,10 +2,7 @@ package com.wyx.flex;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.widget.TextView;
-import java.io.IOException;
 
 /**
  * @author winney E-mail: weiyixiong@tigerbrokers.com
@@ -14,9 +11,6 @@ import java.io.IOException;
 
 public class LogCatActivity extends Activity {
   TextView logcat;
-  private static Handler handler;
-
-  public static final int TIME_SCHEDULE = 1500;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -28,27 +22,16 @@ public class LogCatActivity extends Activity {
   }
 
   private void startLogCat() {
-    handler = new LogCatHandler(logcat);
-    handler.sendEmptyMessageDelayed(1, 0);
-  }
-
-  static class LogCatHandler extends Handler {
-    TextView textView;
-
-    public LogCatHandler(TextView textView) {
-      this.textView = textView;
-    }
-
-    @Override
-    public void handleMessage(Message msg) {
-      super.handleMessage(msg);
-      try {
-        LogCatUtil.getLogcatInfo();
-        textView.setText(LogCatUtil.getCacheLog());
-        handler.sendEmptyMessageDelayed(1, TIME_SCHEDULE);
-      } catch (IOException e) {
-        e.printStackTrace();
+    LogCatUtil.addUpdateListener(new LogCatUtil.LogcatUpdateListener() {
+      @Override
+      public void onUpdate(final String log) {
+        logcat.post(new Runnable() {
+          @Override
+          public void run() {
+            logcat.setText(log);
+          }
+        });
       }
-    }
+    });
   }
 }
