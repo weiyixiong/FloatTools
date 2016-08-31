@@ -57,6 +57,7 @@ public class FloatTools {
   private Button btnReset;
   private Button btnHide;
   private Button btnLogcat;
+  private Button btnTrigger;
   private ImageView dragArea;
   private TextView logInfo;
   private ScrollView logCatWrapper;
@@ -200,6 +201,7 @@ public class FloatTools {
     btnReset = (Button) mFloatLayout.findViewById(R.id.reset);
     btnHide = (Button) mFloatLayout.findViewById(R.id.hide);
     btnLogcat = (Button) mFloatLayout.findViewById(R.id.logcat);
+    btnTrigger = (Button) mFloatLayout.findViewById(R.id.trigger_event);
     dragArea = (ImageView) mFloatLayout.findViewById(R.id.drag_area);
     logInfo = (TextView) mFloatLayout.findViewById(R.id.tv_loginfo);
     logCatWrapper = (ScrollView) mFloatLayout.findViewById(R.id.tv_loginfo_wrapper);
@@ -231,8 +233,20 @@ public class FloatTools {
       }
     });
 
+    btnTrigger.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        triggerEvent.run();
+      }
+    });
     mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+  }
+
+  private static Runnable triggerEvent;
+
+  public static void setTriggerEvent(Runnable runnable) {
+    triggerEvent = runnable;
   }
 
   private void startLogCat() {
