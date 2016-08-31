@@ -20,7 +20,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import com.wyx.flex.parser.ViewParser;
@@ -50,7 +50,7 @@ public class FloatTools {
 
   private static Application application;
 
-  private static LinearLayout mFloatLayout;
+  private static RelativeLayout mFloatLayout;
   private WindowManager.LayoutParams wmParams;
   private WindowManager mWindowManager;
   private Button btnDebug;
@@ -196,7 +196,7 @@ public class FloatTools {
     wmParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
 
     LayoutInflater inflater = LayoutInflater.from(activity.getApplication());
-    mFloatLayout = (LinearLayout) inflater.inflate(R.layout.float_tool_bar, null);
+    mFloatLayout = (RelativeLayout) inflater.inflate(R.layout.float_tool_bar, null);
     btnDebug = (Button) mFloatLayout.findViewById(R.id.button);
     btnReset = (Button) mFloatLayout.findViewById(R.id.reset);
     btnHide = (Button) mFloatLayout.findViewById(R.id.hide);
@@ -236,7 +236,9 @@ public class FloatTools {
     btnTrigger.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        triggerEvent.run();
+        if (triggerEvent != null) {
+          triggerEvent.run();
+        }
       }
     });
     mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
