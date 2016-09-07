@@ -27,7 +27,8 @@ public class DragLayout extends FrameLayout {
   private void initDragHelper() {
     dragHelper = ViewDragHelper.create(this, new ViewDragHelper.Callback() {
 
-      @Override public int clampViewPositionHorizontal(View child, int left, int dx) {
+      @Override
+      public int clampViewPositionHorizontal(View child, int left, int dx) {
         //if (getPaddingLeft() > left) {
         //  return getPaddingLeft();
         //}
@@ -39,7 +40,8 @@ public class DragLayout extends FrameLayout {
         return left;
       }
 
-      @Override public int clampViewPositionVertical(View child, int top, int dy) {
+      @Override
+      public int clampViewPositionVertical(View child, int top, int dy) {
         //if (getPaddingTop() > top) {
         //  return getPaddingTop();
         //}
@@ -50,33 +52,39 @@ public class DragLayout extends FrameLayout {
         return top;
       }
 
-      @Override public int getViewHorizontalDragRange(View child) {
+      @Override
+      public int getViewHorizontalDragRange(View child) {
         return getMeasuredWidth() - child.getMeasuredWidth();
       }
 
-      @Override public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
+      @Override
+      public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
         LayoutParams params = (LayoutParams) changedView.getLayoutParams();
         params.leftMargin = left;
         params.topMargin = top;
         changedView.setLayoutParams(params);
       }
 
-      @Override public boolean tryCaptureView(View child, int pointerId) {
+      @Override
+      public boolean tryCaptureView(View child, int pointerId) {
         return true;
       }
 
-      @Override public int getViewVerticalDragRange(View child) {
+      @Override
+      public int getViewVerticalDragRange(View child) {
         return getMeasuredHeight() - child.getMeasuredHeight();
       }
     });
   }
 
-  @Override protected void dispatchDraw(Canvas canvas) {
+  @Override
+  protected void dispatchDraw(Canvas canvas) {
     super.dispatchDraw(canvas);
     PaintUtil.drawBorder(this, canvas);
   }
 
-  @Override public boolean dispatchTouchEvent(MotionEvent ev) {
+  @Override
+  public boolean dispatchTouchEvent(MotionEvent ev) {
     return super.dispatchTouchEvent(ev);
   }
 
@@ -87,11 +95,12 @@ public class DragLayout extends FrameLayout {
         y >= rect.top && y < rect.bottom;
   }
 
-  @Override public boolean onTouchEvent(MotionEvent ev) {
+  @Override
+  public boolean onTouchEvent(MotionEvent ev) {
     super.onTouchEvent(ev);
     dragHelper.processTouchEvent(ev);
     final ViewGroup parent = (ViewGroup) findBottomView(this, x, y).getParent();
-    return false || parent == this;
+    return parent == this;
   }
 
   public View findBottomView(ViewGroup viewGroup, float x, float y) {
@@ -108,7 +117,8 @@ public class DragLayout extends FrameLayout {
     return viewGroup;
   }
 
-  @Override public boolean onInterceptTouchEvent(MotionEvent ev) {
+  @Override
+  public boolean onInterceptTouchEvent(MotionEvent ev) {
     x = ev.getRawX();
     y = ev.getRawY();
     View haveChildUnder = findBottomView(this, x, y);

@@ -43,7 +43,7 @@ public class FloatConfig {
     this.triggerEnabled = triggerEnabled;
   }
 
-  class Builder {
+  public static class Builder {
     FloatConfig config;
 
     public Builder() {
@@ -56,17 +56,17 @@ public class FloatConfig {
     }
 
     public Builder setShowLogCatWindow(boolean showLogCatWindow) {
-      this.config.setShowLogCatWindow(startOnLaunch);
+      this.config.setShowLogCatWindow(showLogCatWindow);
       return this;
     }
 
     public Builder setLogCatEnabled(boolean logCatEnabled) {
-      this.config.setLogCatEnabled(startOnLaunch);
+      this.config.setLogCatEnabled(logCatEnabled);
       return this;
     }
 
     public Builder setTriggerEnabled(boolean triggerEnabled) {
-      this.config.setTriggerEnabled(startOnLaunch);
+      this.config.setTriggerEnabled(triggerEnabled);
       return this;
     }
 

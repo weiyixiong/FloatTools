@@ -6,7 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
-import android.graphics.Point;
+import android.graphics.PointF;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
@@ -64,12 +64,12 @@ public class FloatTools {
   private ScrollView logCatWrapper;
   private WeakReference<Activity> currentActivity;
   private static FloatTools instance;
-  private Point touchDownPoint;
+  private PointF touchDownPoint;
   private static SensorManager mSensorManager;
   private static Sensor mAccelerometer;
   private ShakeDetector mShakeDetector;
   private int floatViewStatus = View.INVISIBLE;
-  private FloatConfig config = new FloatConfig();
+  private static FloatConfig config = new FloatConfig();
 
   public static void init(Application application) {
     FloatTools.application = application;
@@ -155,14 +155,20 @@ public class FloatTools {
       @Override
       public boolean onTouch(View v, MotionEvent event) {
         if (touchDownPoint == null) {
-          touchDownPoint = new Point();
+          touchDownPoint = new PointF();
         }
+        float x = event.getRawX();
+        float y = event.getRawY();
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-          touchDownPoint.set((int) event.getX(), (int) event.getY());
+          touchDownPoint.set(x, y);
         } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-          wmParams.x += (int) event.getX() - touchDownPoint.x;
-          wmParams.y += (int) event.getY() - touchDownPoint.y;
+          wmParams = (WindowManager.LayoutParams) mFloatLayout.getLayoutParams();
+          wmParams.x += (x - touchDownPoint.x);
+          wmParams.y += (y - touchDownPoint.y);
           mWindowManager.updateViewLayout(mFloatLayout, wmParams);
+
+          L.e(wmParams.x + "  " + x + " " + touchDownPoint.x);
+          touchDownPoint.set(x, y);
         }
         return false;
       }
@@ -214,9 +220,9 @@ public class FloatTools {
       startLogCat();
     }
     if (!config.isShowLogCatWindow()) {
-      logInfo.setVisibility(View.GONE);
+      logCatWrapper.setVisibility(View.GONE);
     } else {
-      logInfo.setVisibility(View.VISIBLE);
+      logCatWrapper.setVisibility(View.VISIBLE);
     }
 
     btnLogcat.setOnClickListener(new View.OnClickListener() {
@@ -441,7 +447,7 @@ public class FloatTools {
     return allChildren;
   }
 
-  public void setConfig(FloatConfig config) {
-    this.config = config;
+  public static void setConfig(FloatConfig con) {
+    config = con;
   }
 }
