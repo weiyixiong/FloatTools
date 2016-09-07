@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.PointF;
@@ -366,9 +368,12 @@ public class FloatTools {
         BorderImageView tmp = new BorderImageView(activity);
         FrameLayout.LayoutParams params =
             new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        view.destroyDrawingCache();
-        view.buildDrawingCache();
-        tmp.setImageBitmap(view.getDrawingCache());
+        if (view.getMeasuredWidth() == 0 || view.getMeasuredHeight() == 0) {
+          continue;
+        }
+        Bitmap bitmap = Bitmap.createBitmap(view.getMeasuredWidth(), view.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+        view.draw(new Canvas(bitmap));
+        tmp.setImageBitmap(bitmap);
         parent.addView(tmp);
         int[] location = new int[2];
         view.getLocationOnScreen(location);
