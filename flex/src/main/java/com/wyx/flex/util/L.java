@@ -11,7 +11,8 @@ import java.io.IOException;
 /**
  * Log record tool
  */
-@SuppressWarnings({ "unused", "ResultOfMethodCallIgnored" }) public class L {
+@SuppressWarnings({ "unused", "ResultOfMethodCallIgnored" })
+public class L {
 
   private static final int LOG_CAT_MAX_LENGTH = 3900;
 
@@ -26,7 +27,7 @@ import java.io.IOException;
   private static boolean write2SdCard = false;
   private static int write2SdPriorityLevel = WRITE_TO_SD_PRIORITY_LEVEL;
 
-  private static boolean debug = true;
+  private static boolean debug = false;
 
   public static void setDebug(boolean debug) {
     L.debug = debug;
