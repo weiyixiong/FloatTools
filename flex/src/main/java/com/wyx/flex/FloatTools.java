@@ -217,7 +217,10 @@ public class FloatTools {
     logCatWrapper = (ScrollView) mFloatLayout.findViewById(R.id.tv_loginfo_wrapper);
 
     if (config.isLogCatEnabled()) {
+      btnLogcat.setVisibility(View.VISIBLE);
       startLogCat();
+    } else {
+      btnLogcat.setVisibility(View.GONE);
     }
     if (!config.isShowLogCatWindow()) {
       logCatWrapper.setVisibility(View.GONE);
@@ -252,6 +255,7 @@ public class FloatTools {
     });
 
     if (config.isTriggerEnabled()) {
+      btnTrigger.setVisibility(View.VISIBLE);
       btnTrigger.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -260,6 +264,8 @@ public class FloatTools {
           }
         }
       });
+    } else {
+      btnTrigger.setVisibility(View.GONE);
     }
     mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));

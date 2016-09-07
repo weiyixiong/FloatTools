@@ -9,6 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import com.wyx.flex.util.PaintUtil;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Created by winney on 16/5/11.
@@ -99,7 +101,23 @@ public class DragLayout extends FrameLayout {
   public boolean onTouchEvent(MotionEvent ev) {
     super.onTouchEvent(ev);
     dragHelper.processTouchEvent(ev);
-    final ViewGroup parent = (ViewGroup) findBottomView(this, x, y).getParent();
+    View bottomView = findBottomView(this, x, y);
+    final ViewGroup parent = (ViewGroup) bottomView.getParent();
+
+    if (ev.getAction() == MotionEvent.ACTION_MOVE) {
+      try {
+        Method removeLongPressCallback = View.class.getDeclaredMethod("removeLongPressCallback");
+        removeLongPressCallback.setAccessible(true);
+        removeLongPressCallback.invoke(parent);
+        removeLongPressCallback.invoke(bottomView);
+      } catch (NoSuchMethodException e) {
+        e.printStackTrace();
+      } catch (InvocationTargetException e) {
+        e.printStackTrace();
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+      }
+    }
     return parent == this;
   }
 
