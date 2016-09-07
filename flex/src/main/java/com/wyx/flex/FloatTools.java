@@ -24,6 +24,7 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import com.wyx.flex.parser.ViewParser;
+import com.wyx.flex.util.FloatConfig;
 import com.wyx.flex.util.L;
 import com.wyx.flex.util.LogCatUtil;
 import com.wyx.flex.util.Navgation;
@@ -68,6 +69,7 @@ public class FloatTools {
   private static Sensor mAccelerometer;
   private ShakeDetector mShakeDetector;
   private int floatViewStatus = View.INVISIBLE;
+  private FloatConfig config = new FloatConfig();
 
   public static void init(Application application) {
     FloatTools.application = application;
@@ -177,7 +179,9 @@ public class FloatTools {
         showFloatTools();
       }
     });
-    showFloatTools();
+    if (config.isStartOnLaunch()) {
+      showFloatTools();
+    }
     mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
   }
 
@@ -205,7 +209,15 @@ public class FloatTools {
     dragArea = (ImageView) mFloatLayout.findViewById(R.id.drag_area);
     logInfo = (TextView) mFloatLayout.findViewById(R.id.tv_loginfo);
     logCatWrapper = (ScrollView) mFloatLayout.findViewById(R.id.tv_loginfo_wrapper);
-    startLogCat();
+
+    if (config.isLogCatEnabled()) {
+      startLogCat();
+    }
+    if (!config.isShowLogCatWindow()) {
+      logInfo.setVisibility(View.GONE);
+    } else {
+      logInfo.setVisibility(View.VISIBLE);
+    }
 
     btnLogcat.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -233,14 +245,16 @@ public class FloatTools {
       }
     });
 
-    btnTrigger.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        if (triggerEvent != null) {
-          triggerEvent.run();
+    if (config.isTriggerEnabled()) {
+      btnTrigger.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          if (triggerEvent != null) {
+            triggerEvent.run();
+          }
         }
-      }
-    });
+      });
+    }
     mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
   }
@@ -425,5 +439,9 @@ public class FloatTools {
       }
     }
     return allChildren;
+  }
+
+  public void setConfig(FloatConfig config) {
+    this.config = config;
   }
 }
