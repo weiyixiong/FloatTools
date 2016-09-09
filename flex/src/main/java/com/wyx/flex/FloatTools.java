@@ -346,6 +346,9 @@ public class FloatTools {
     for (int i = 0; i < origin.getChildCount(); i++) {
       final View view = origin.getChildAt(i);
       L.e(view.getClass());
+      if (!view.isShown()) {
+        continue;
+      }
       if (view instanceof ViewGroup) {
         DragLayout frameLayout = new DragLayout(activity);
         FrameLayout.LayoutParams params =
