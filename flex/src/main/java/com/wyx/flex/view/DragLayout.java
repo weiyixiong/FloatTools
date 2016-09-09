@@ -122,7 +122,7 @@ public class DragLayout extends FrameLayout {
   }
 
   public View findBottomView(ViewGroup viewGroup, float x, float y) {
-    for (int i = 0; i < viewGroup.getChildCount(); i++) {
+    for (int i = viewGroup.getChildCount() - 1; i >= 0; i--) {
       View view = viewGroup.getChildAt(i);
       if (isInside(x, y, view)) {
         if (view instanceof ViewGroup && ((ViewGroup) view).getChildCount() != 0) {
