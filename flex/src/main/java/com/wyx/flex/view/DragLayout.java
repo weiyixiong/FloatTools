@@ -3,9 +3,11 @@ package com.wyx.flex.view;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v4.widget.ViewDragHelper;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import com.wyx.flex.util.PaintUtil;
@@ -20,6 +22,9 @@ public class DragLayout extends FrameLayout {
 
   private float x;
   private float y;
+
+  private float initialX;
+  private float initialY;
 
   public DragLayout(Context context) {
     super(context);
@@ -104,12 +109,18 @@ public class DragLayout extends FrameLayout {
     View bottomView = findBottomView(this, x, y);
     final ViewGroup parent = (ViewGroup) bottomView.getParent();
 
-    if (ev.getAction() == MotionEvent.ACTION_MOVE) {
+    if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+      initialX = ev.getX();
+      initialY = ev.getY();
+    } else if (ev.getAction() == MotionEvent.ACTION_MOVE && isTouchSlop(ev, initialX, initialY)) {
       try {
         Method removeLongPressCallback = View.class.getDeclaredMethod("removeLongPressCallback");
         removeLongPressCallback.setAccessible(true);
-        removeLongPressCallback.invoke(parent);
         removeLongPressCallback.invoke(bottomView);
+        while (bottomView.getParent() != null && bottomView.getParent() instanceof View) {
+          removeLongPressCallback.invoke(bottomView.getParent());
+          bottomView = (View) bottomView.getParent();
+        }
       } catch (NoSuchMethodException e) {
         e.printStackTrace();
       } catch (InvocationTargetException e) {
@@ -119,6 +130,18 @@ public class DragLayout extends FrameLayout {
       }
     }
     return parent == this;
+  }
+
+  public boolean isTouchSlop(MotionEvent event, float initialX, float initialY) {
+    final float dx = MotionEventCompat.getX(event, 0) - initialX;
+    final float dy = MotionEventCompat.getY(event, 0) - initialY;
+    int touchSlop = getTouchSlop();
+    return dx * dx + dy * dy > touchSlop * touchSlop;
+  }
+
+  //灵敏度过高 导致对于单击行为判断不准确
+  public int getTouchSlop() {
+    return ViewConfiguration.get(getContext()).getScaledTouchSlop();
   }
 
   public View findBottomView(ViewGroup viewGroup, float x, float y) {
