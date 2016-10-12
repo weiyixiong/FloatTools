@@ -18,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -26,6 +27,8 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import com.wyx.flex.parser.ViewParser;
+import com.wyx.flex.util.AccessibilityUtil;
+import com.wyx.flex.util.EventInput;
 import com.wyx.flex.util.FloatConfig;
 import com.wyx.flex.util.L;
 import com.wyx.flex.util.LogCatUtil;
@@ -36,6 +39,7 @@ import com.wyx.flex.view.BorderImageView;
 import com.wyx.flex.view.DragLayout;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
@@ -61,6 +65,7 @@ public class FloatTools {
   private Button btnHide;
   private Button btnLogcat;
   private Button btnTrigger;
+  private Button btnRecord;
   private ImageView dragArea;
   private TextView logInfo;
   private ScrollView logCatWrapper;
@@ -193,6 +198,58 @@ public class FloatTools {
     mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
   }
 
+  private void installLayer(final Activity activity) {
+    WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
+    mWindowManager =
+        (WindowManager) activity.getApplication().getSystemService(activity.getApplication().WINDOW_SERVICE);
+    wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
+    wmParams.format = PixelFormat.RGBA_8888;
+    wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+    wmParams.gravity = Gravity.LEFT | Gravity.TOP;
+    wmParams.x = 0;
+    wmParams.y = 0;
+
+    wmParams.width = WindowManager.LayoutParams.MATCH_PARENT;
+    wmParams.height = WindowManager.LayoutParams.MATCH_PARENT;
+
+    FrameLayout layer = new FrameLayout(activity.getApplicationContext());
+    layer.setBackgroundColor(Color.TRANSPARENT);
+    if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
+      AccessibilityUtil.openSetting(activity);
+    }
+    try {
+      Process exec = Runtime.getRuntime()
+                            .exec(new String[] {
+                                "exec", "app_process", "/system/bin", "com.zke1e.andcast.Main"
+                            });//"exec app_process /system/bin com.zke1e.andcast.Main");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    try {
+      final EventInput input = new EventInput();
+      layer.setOnTouchListener(new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+          //L.e(motionEvent.getAction() + " " + motionEvent.getX() + motionEvent.getY());
+          activity.dispatchTouchEvent(motionEvent);
+          //try {
+          //  input.injectMotionEvent(InputDeviceCompat.SOURCE_TOUCHSCREEN, 0, SystemClock.uptimeMillis(),
+          //                          motionEvent.getX(), motionEvent.getY(), 1.
+          //} catch (InvocationTargetException e) {
+          //  e.printStackTrace();
+          //} catch (IllegalAccessException e) {
+          //  e.printStackTrace();
+          //}
+          return false;
+        }
+      });
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    //mWindowManager.addView(layer, wmParams);
+  }
+
   private void initFloatView(final Activity activity) {
     wmParams = new WindowManager.LayoutParams();
     mWindowManager =
@@ -214,6 +271,7 @@ public class FloatTools {
     btnHide = (Button) mFloatLayout.findViewById(R.id.hide);
     btnLogcat = (Button) mFloatLayout.findViewById(R.id.logcat);
     btnTrigger = (Button) mFloatLayout.findViewById(R.id.trigger_event);
+    btnRecord = (Button) mFloatLayout.findViewById(R.id.install_layer);
     dragArea = (ImageView) mFloatLayout.findViewById(R.id.drag_area);
     logInfo = (TextView) mFloatLayout.findViewById(R.id.tv_loginfo);
     logCatWrapper = (ScrollView) mFloatLayout.findViewById(R.id.tv_loginfo_wrapper);
@@ -256,6 +314,12 @@ public class FloatTools {
       }
     });
 
+    btnRecord.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        installLayer(activity);
+      }
+    });
     if (config.isTriggerEnabled()) {
       btnTrigger.setVisibility(View.VISIBLE);
       btnTrigger.setOnClickListener(new View.OnClickListener() {
@@ -459,6 +523,10 @@ public class FloatTools {
       }
     }
     return allChildren;
+  }
+
+  public static void setDebug(boolean debug) {
+    L.setDebug(debug);
   }
 
   public static void setConfig(FloatConfig con) {

@@ -13,5 +13,6 @@ public class DevApplication extends android.app.Application {
     FloatTools.init(this);
     FloatTools.setConfig(
         new FloatConfig.Builder().setLogCatEnabled(false).setTriggerEnabled(false).setShowLogCatWindow(false).create());
+    FloatTools.setDebug(true);
   }
 }

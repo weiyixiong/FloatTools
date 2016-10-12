@@ -21,6 +21,21 @@
         android:launchMode="singleInstance"
         />
 
+    <service
+        android:name="com.wyx.flex.service.DetectionService"
+        android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+        >
+
+      <intent-filter>
+        <action android:name="android.accessibilityservice.AccessibilityService" />
+      </intent-filter>
+
+      <meta-data
+          android:name="android.accessibilityservice"
+          android:resource="@xml/detection_service_config"
+          />
+
+    </service>
   </application>
 
 </manifest>

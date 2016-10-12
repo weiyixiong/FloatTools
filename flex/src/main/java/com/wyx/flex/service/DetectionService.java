@@ -1,0 +1,82 @@
+package com.wyx.flex.service;
+
+import android.accessibilityservice.AccessibilityService;
+import android.annotation.SuppressLint;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.view.KeyEvent;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
+import java.util.List;
+
+public class DetectionService extends AccessibilityService {
+
+  final static String TAG = "DetectionService";
+
+  static String foregroundPackageName;
+
+  @Override
+  public int onStartCommand(Intent intent, int flags, int startId) {
+    return START_STICKY; // 根据需要返回不同的语义值
+  }
+
+  @SuppressLint("NewApi")
+  private void findAndPerformAction(String text) {
+    // 查找当前窗口中包含“安装”文字的按钮
+    if (getRootInActiveWindow() == null) return;
+    //通过文字找到当前的节点
+    List<AccessibilityNodeInfo> nodes = getRootInActiveWindow().findAccessibilityNodeInfosByText(text);
+    for (int i = 0; i < nodes.size(); i++) {
+      AccessibilityNodeInfo node = nodes.get(i);
+      // 执行按钮点击行为
+      if (node.getClassName().equals("android.widget.Button") && node.isEnabled()) {
+        node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+      }
+    }
+  }
+
+  /**
+   * 重载辅助功能事件回调函数，对窗口状态变化事件进行处理
+   */
+  @Override
+  public void onAccessibilityEvent(AccessibilityEvent event) {
+    switch (event.getEventType()) {
+      case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
+        foregroundPackageName = event.getPackageName().toString();
+        ComponentName cName = new ComponentName(event.getPackageName().toString(), event.getClassName().toString());
+        break;
+      case AccessibilityEvent.TYPE_VIEW_FOCUSED:
+        //if edittext
+        // removeLayer() 什么时候加回来呢。。
+
+        event.getClassName();
+        event.getText();
+        //event.ge
+        break;
+      case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
+        event.getClassName();
+        event.getText();
+        //getFinal text
+        break;
+    }
+  }
+
+  @Override
+  protected boolean onKeyEvent(KeyEvent event) {
+    return super.onKeyEvent(event);
+  }
+
+  @Override
+  protected boolean onGesture(int gestureId) {
+    return super.onGesture(gestureId);
+  }
+
+  @Override
+  public void onInterrupt() {
+  }
+
+  @Override
+  protected void onServiceConnected() {
+    super.onServiceConnected();
+  }
+}

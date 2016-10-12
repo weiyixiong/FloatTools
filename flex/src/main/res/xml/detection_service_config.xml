@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 根据的 Service 的不同功能需要，你可能需要不同的配置 -->
+<accessibility-service
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeAllMask"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagIncludeNotImportantViews|flagRequestFilterKeyEvents"
+    android:canRetrieveWindowContent="true"
+    android:canRequestFilterKeyEvents="true"
+    />
+
+    <!--<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"-->
+    <!--android:accessibilityEventTypes="typeAllMask"-->
+    <!--android:accessibilityFeedbackType="feedbackGeneric"-->
+    <!--typeWindowStateChanged|typeViewFocused|typeViewSelected|typeViewTextChanged|typeViewClicked|typeContextClicked|typeWindowContentChanged|typeWindowsChanged"-->
+    <!--android:canRetrieveWindowContent="true"-->
+    <!--android:description="@string/testaccessibility"-->
+    <!--android:packageNames="com.android.packageinstaller"-->
+    <!--android:notificationTimeout="100" />-->
