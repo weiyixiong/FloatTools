@@ -1,9 +1,7 @@
 package com.wyx.flex;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Application;
-import android.app.usage.UsageEvents;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -13,18 +11,14 @@ import android.graphics.PixelFormat;
 import android.graphics.PointF;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.text.method.KeyListener;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -41,18 +35,15 @@ import com.wyx.flex.util.FloatConfig;
 import com.wyx.flex.util.L;
 import com.wyx.flex.util.LogCatUtil;
 import com.wyx.flex.util.Navgation;
-import com.wyx.flex.util.ReflectionUtil;
 import com.wyx.flex.util.ShakeDetector;
 import com.wyx.flex.util.StorageUtils;
 import com.wyx.flex.view.BorderImageView;
 import com.wyx.flex.view.DragLayout;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,6 +68,7 @@ public class FloatTools {
   private Button btnLogcat;
   private Button btnTrigger;
   private Button btnRecord;
+  private Button btnReplay;
   private ImageView dragArea;
   private TextView logInfo;
   private ScrollView logCatWrapper;
@@ -214,8 +206,8 @@ public class FloatTools {
       touchLayer.setOnTouchListener(new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
-          eventInput.recordMotionEvent(motionEvent);
           activity.dispatchTouchEvent(motionEvent);
+          eventInput.recordMotionEvent(motionEvent);
           return false;
         }
       });
@@ -223,7 +215,9 @@ public class FloatTools {
     if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
       AccessibilityUtil.openSetting(activity);
     } else {
+      hideFloatTools();
       addTouchLayer();
+      showFloatTools();
     }
   }
 
@@ -297,6 +291,7 @@ public class FloatTools {
     btnLogcat = (Button) mFloatLayout.findViewById(R.id.logcat);
     btnTrigger = (Button) mFloatLayout.findViewById(R.id.trigger_event);
     btnRecord = (Button) mFloatLayout.findViewById(R.id.install_layer);
+    btnReplay = (Button) mFloatLayout.findViewById(R.id.replay);
     dragArea = (ImageView) mFloatLayout.findViewById(R.id.drag_area);
     logInfo = (TextView) mFloatLayout.findViewById(R.id.tv_loginfo);
     logCatWrapper = (ScrollView) mFloatLayout.findViewById(R.id.tv_loginfo_wrapper);
@@ -333,8 +328,7 @@ public class FloatTools {
     btnHide.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        mWindowManager.removeView(mFloatLayout);
-        floatViewStatus = View.INVISIBLE;
+        hideFloatTools();
         btnReset.performClick();
       }
     });
@@ -343,6 +337,13 @@ public class FloatTools {
       @Override
       public void onClick(View view) {
         installLayer(activity);
+      }
+    });
+    btnRecord.setOnLongClickListener(new View.OnLongClickListener() {
+      @Override
+      public boolean onLongClick(View v) {
+        eventInput.clear();
+        return false;
       }
     });
     if (config.isTriggerEnabled()) {
@@ -358,8 +359,24 @@ public class FloatTools {
     } else {
       btnTrigger.setVisibility(View.GONE);
     }
+
+    btnReplay.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        eventInput.replay();
+      }
+    });
     mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+  }
+
+  private void hideFloatTools() {
+    mWindowManager.removeView(mFloatLayout);
+    floatViewStatus = View.INVISIBLE;
+  }
+
+  public void onTouch(MotionEvent event) {
+    this.currentActivity.get().dispatchTouchEvent(event);
   }
 
   private static Runnable triggerEvent;

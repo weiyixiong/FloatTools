@@ -1,14 +1,18 @@
 package com.wyx.flex.util;
 
 import android.hardware.input.InputManager;
+import android.os.Handler;
+import android.os.Message;
+import android.os.SystemClock;
+import android.support.v4.view.InputDeviceCompat;
 import android.view.InputEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
+import com.wyx.flex.FloatTools;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import org.w3c.dom.Text;
 
 /**
  * Created by omerjerk on 19/9/15.
@@ -19,7 +23,8 @@ public class EventInput {
 
   Method injectInputEventMethod;
   InputManager im;
-  ArrayList<Event> record = new ArrayList<>();
+  ArrayList<RecordEvent> record = new ArrayList<>();
+  ReplayHandler handler;
 
   public EventInput() {
 
@@ -49,23 +54,49 @@ public class EventInput {
     injectInputEventMethod.invoke(im, new Object[] { event, Integer.valueOf(0) });
   }
 
+  private long getCurrentTime() {
+    return SystemClock.uptimeMillis();
+  }
+
   public void recordMotionEvent(MotionEvent event) {
-    record.add(new Event(event, System.currentTimeMillis()));
+    record.add(new RecordEvent(MotionEvent.obtain(event), getCurrentTime()));
   }
 
   public void recordEditEvent(float x, float y, String text) {
-    record.add(new Event(text, x, y, System.currentTimeMillis()));
+    record.add(new RecordEvent(text, x, y, getCurrentTime()));
+  }
+
+  public void replay() {
+    handler = new ReplayHandler();
+    long startTime = getCurrentTime();
+    for (int i = 0; i < record.size(); i++) {
+      long timeDiff = 0;
+      if (i != 0) {
+        timeDiff = record.get(i).time - record.get(0).time;
+      }
+      RecordEvent event = record.get(i);
+      MotionEvent motionEvent = MotionEvent.obtain(event.event);
+      MotionEvent event1 =
+          buildEvent(motionEvent.getAction(), startTime + timeDiff, motionEvent.getRawX(), motionEvent.getRawY(), 1.0f);
+      handler.sendMessageDelayed(handler.obtainMessage(0, event1), timeDiff);
+    }
   }
 
   public MotionEvent buildEvent(int action, long when, float x, float y, float pressure) {
-    return MotionEvent.obtain(when, when, action, x, y, pressure, 1.0f, 0, 1.0f, 1.0f, 0, 0);
+    MotionEvent obtain = MotionEvent.obtain(when, when, action, x, y, pressure, 1.0f, 0, 1.0f, 1.0f, 0, 0);
+    obtain.setSource(InputDeviceCompat.SOURCE_TOUCHSCREEN);
+    return obtain;
   }
 
   private void injectKeyEvent(KeyEvent event) throws InvocationTargetException, IllegalAccessException {
     injectInputEventMethod.invoke(im, new Object[] { event, Integer.valueOf(0) });
   }
 
-  public static class Event {
+  public void clear() {
+    record.clear();
+  }
+
+  public static class RecordEvent {
     private EventType type;
     private MotionEvent event;
     private String text;
@@ -73,13 +104,13 @@ public class EventInput {
     private float y;
     private long time;
 
-    public Event(MotionEvent event, long time) {
+    public RecordEvent(MotionEvent event, long time) {
       this.event = event;
       this.type = EventType.TOUCH;
       this.time = time;
     }
 
-    public Event(String text, float x, float y, long time) {
+    public RecordEvent(String text, float x, float y, long time) {
       this.type = EventType.EDIT;
       this.text = text;
       this.x = x;
@@ -90,5 +121,16 @@ public class EventInput {
 
   public enum EventType {
     EDIT, TOUCH
+  }
+
+  private static class ReplayHandler extends Handler {
+    @Override
+    public void handleMessage(Message msg) {
+      super.handleMessage(msg);
+      L.e(msg.obj.toString());
+      FloatTools.getInstance().onTouch((MotionEvent) msg.obj);
+      //Runnable obj = (Runnable) msg.obj;
+      //obj.run();
+    }
   }
 }
