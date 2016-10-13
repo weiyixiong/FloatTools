@@ -8,6 +8,7 @@ import android.view.MotionEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import org.w3c.dom.Text;
 
 /**
  * Created by omerjerk on 19/9/15.
@@ -18,9 +19,13 @@ public class EventInput {
 
   Method injectInputEventMethod;
   InputManager im;
-  ArrayList<MotionEvent> record = new ArrayList<>();
+  ArrayList<Event> record = new ArrayList<>();
 
-  public EventInput() throws Exception {
+  public EventInput() {
+
+  }
+
+  public EventInput(Object o) throws Exception {
     //Get the instance of InputManager class using reflection
     String methodName = "getInstance";
     Object[] objArr = new Object[0];
@@ -45,7 +50,11 @@ public class EventInput {
   }
 
   public void recordMotionEvent(MotionEvent event) {
-    record.add(event);
+    record.add(new Event(event, System.currentTimeMillis()));
+  }
+
+  public void recordEditEvent(float x, float y, String text) {
+    record.add(new Event(text, x, y, System.currentTimeMillis()));
   }
 
   public MotionEvent buildEvent(int action, long when, float x, float y, float pressure) {
@@ -54,5 +63,32 @@ public class EventInput {
 
   private void injectKeyEvent(KeyEvent event) throws InvocationTargetException, IllegalAccessException {
     injectInputEventMethod.invoke(im, new Object[] { event, Integer.valueOf(0) });
+  }
+
+  public static class Event {
+    private EventType type;
+    private MotionEvent event;
+    private String text;
+    private float x;
+    private float y;
+    private long time;
+
+    public Event(MotionEvent event, long time) {
+      this.event = event;
+      this.type = EventType.TOUCH;
+      this.time = time;
+    }
+
+    public Event(String text, float x, float y, long time) {
+      this.type = EventType.EDIT;
+      this.text = text;
+      this.x = x;
+      this.y = y;
+      this.time = time;
+    }
+  }
+
+  public enum EventType {
+    EDIT, TOUCH
   }
 }

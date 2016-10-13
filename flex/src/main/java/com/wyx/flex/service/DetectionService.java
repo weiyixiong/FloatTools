@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import com.wyx.flex.FloatTools;
 import java.util.List;
 
 public class DetectionService extends AccessibilityService {
@@ -46,17 +47,10 @@ public class DetectionService extends AccessibilityService {
         ComponentName cName = new ComponentName(event.getPackageName().toString(), event.getClassName().toString());
         break;
       case AccessibilityEvent.TYPE_VIEW_FOCUSED:
-        //if edittext
-        // removeLayer() 什么时候加回来呢。。
-
-        event.getClassName();
-        event.getText();
-        //event.ge
-        break;
-      case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
-        event.getClassName();
-        event.getText();
-        //getFinal text
+        if (event.getClassName().equals("android.widget.EditText")) {
+          FloatTools.getInstance().removeTouchLayer();
+          FloatTools.getInstance().setEditorListener();
+        }
         break;
     }
   }

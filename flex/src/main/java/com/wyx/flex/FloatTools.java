@@ -1,7 +1,9 @@
 package com.wyx.flex;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Application;
+import android.app.usage.UsageEvents;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -11,16 +13,22 @@ import android.graphics.PixelFormat;
 import android.graphics.PointF;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.text.method.KeyListener;
+import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -33,6 +41,7 @@ import com.wyx.flex.util.FloatConfig;
 import com.wyx.flex.util.L;
 import com.wyx.flex.util.LogCatUtil;
 import com.wyx.flex.util.Navgation;
+import com.wyx.flex.util.ReflectionUtil;
 import com.wyx.flex.util.ShakeDetector;
 import com.wyx.flex.util.StorageUtils;
 import com.wyx.flex.view.BorderImageView;
@@ -43,6 +52,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +68,7 @@ public class FloatTools {
   private static Application application;
 
   private static RelativeLayout mFloatLayout;
+  private FrameLayout touchLayer;
   private WindowManager.LayoutParams wmParams;
   private WindowManager mWindowManager;
   private Button btnDebug;
@@ -76,7 +87,9 @@ public class FloatTools {
   private static Sensor mAccelerometer;
   private ShakeDetector mShakeDetector;
   private int floatViewStatus = View.INVISIBLE;
+  private int touchLayerStatus = View.INVISIBLE;
   private static FloatConfig config = new FloatConfig();
+  private static EventInput eventInput = new EventInput();
 
   public static void init(Application application) {
     FloatTools.application = application;
@@ -127,11 +140,7 @@ public class FloatTools {
     createFloatView();
   }
 
-  public static FloatTools getInstance(Activity activity) {
-    if (instance == null) {
-      instance = new FloatTools();
-    }
-    instance.setupActivity(activity);
+  public static FloatTools getInstance() {
     return instance;
   }
 
@@ -199,55 +208,71 @@ public class FloatTools {
   }
 
   private void installLayer(final Activity activity) {
-    WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
-    mWindowManager =
-        (WindowManager) activity.getApplication().getSystemService(activity.getApplication().WINDOW_SERVICE);
-    wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
-    wmParams.format = PixelFormat.RGBA_8888;
-    wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-    wmParams.gravity = Gravity.LEFT | Gravity.TOP;
-    wmParams.x = 0;
-    wmParams.y = 0;
-
-    wmParams.width = WindowManager.LayoutParams.MATCH_PARENT;
-    wmParams.height = WindowManager.LayoutParams.MATCH_PARENT;
-
-    FrameLayout layer = new FrameLayout(activity.getApplicationContext());
-    layer.setBackgroundColor(Color.TRANSPARENT);
-    if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
-      AccessibilityUtil.openSetting(activity);
-    }
-    try {
-      Process exec = Runtime.getRuntime()
-                            .exec(new String[] {
-                                "exec", "app_process", "/system/bin", "com.zke1e.andcast.Main"
-                            });//"exec app_process /system/bin com.zke1e.andcast.Main");
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-
-    try {
-      final EventInput input = new EventInput();
-      layer.setOnTouchListener(new View.OnTouchListener() {
+    if (touchLayer == null) {
+      touchLayer = new FrameLayout(activity.getApplicationContext());
+      touchLayer.setBackgroundColor(Color.TRANSPARENT);
+      touchLayer.setOnTouchListener(new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
-          //L.e(motionEvent.getAction() + " " + motionEvent.getX() + motionEvent.getY());
+          eventInput.recordMotionEvent(motionEvent);
           activity.dispatchTouchEvent(motionEvent);
-          //try {
-          //  input.injectMotionEvent(InputDeviceCompat.SOURCE_TOUCHSCREEN, 0, SystemClock.uptimeMillis(),
-          //                          motionEvent.getX(), motionEvent.getY(), 1.
-          //} catch (InvocationTargetException e) {
-          //  e.printStackTrace();
-          //} catch (IllegalAccessException e) {
-          //  e.printStackTrace();
-          //}
           return false;
         }
       });
-    } catch (Exception e) {
-      e.printStackTrace();
     }
-    //mWindowManager.addView(layer, wmParams);
+    if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
+      AccessibilityUtil.openSetting(activity);
+    } else {
+      addTouchLayer();
+    }
+  }
+
+  public void setEditorListener() {
+    List<View> allChildViews = getAllChildViews(this.currentActivity.get());
+    for (View allChildView : allChildViews) {
+      if (allChildView instanceof EditText) {
+        EditText editText = (EditText) allChildView;
+        editText.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+          public boolean onEditorAction(TextView view, int action, KeyEvent event) {
+            if (isSoftKeyboardFinishedAction(view, action, event)) {
+              eventInput.recordEditEvent(view.getX(), view.getY(), view.getText().toString());
+              addTouchLayer();
+            }
+            return false;
+          }
+        });
+      }
+    }
+  }
+
+  public void addTouchLayer() {
+    if (touchLayerStatus == View.INVISIBLE) {
+      WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
+      wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
+      wmParams.format = PixelFormat.RGBA_8888;
+      wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+      wmParams.gravity = Gravity.LEFT | Gravity.TOP;
+      wmParams.x = 0;
+      wmParams.y = 0;
+
+      wmParams.width = WindowManager.LayoutParams.MATCH_PARENT;
+      wmParams.height = WindowManager.LayoutParams.MATCH_PARENT;
+      mWindowManager.addView(touchLayer, wmParams);
+      touchLayerStatus = View.VISIBLE;
+    }
+  }
+
+  public void removeTouchLayer() {
+    if (touchLayerStatus == View.VISIBLE) {
+      mWindowManager.removeView(touchLayer);
+      touchLayerStatus = View.INVISIBLE;
+    }
+  }
+
+  public static boolean isSoftKeyboardFinishedAction(TextView view, int action, KeyEvent event) {
+    // Some devices return null event on editor actions for Enter Button
+    return (action == EditorInfo.IME_ACTION_DONE || action == EditorInfo.IME_ACTION_GO ||
+        action == EditorInfo.IME_ACTION_SEND) && (event == null || event.getAction() == KeyEvent.ACTION_DOWN);
   }
 
   private void initFloatView(final Activity activity) {
