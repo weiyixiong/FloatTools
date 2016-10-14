@@ -97,6 +97,8 @@ public class FloatTools {
   private static FloatConfig config = new FloatConfig();
   private static EventInput eventInput = new EventInput();
 
+  private static int activityCount = 0;
+
   public static void init(Application application) {
     FloatTools.application = application;
     instance = new FloatTools();
@@ -117,12 +119,17 @@ public class FloatTools {
       @Override
       public void onActivityResumed(Activity activity) {
         instance.setAndDumpActivity(activity);
+        if (activityCount > 0) {
+          activityCount--;
+          instance.installLayer(activity);
+        }
       }
 
       @Override
       public void onActivityPaused(Activity activity) {
         instance.hideFloatTools();
         instance.removeTouchLayer();
+        activityCount++;
       }
 
       @Override
@@ -222,7 +229,6 @@ public class FloatTools {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
           currentActivity.get().dispatchTouchEvent(motionEvent);
-          //activity.getWindow().superDispatchTouchEvent(motionEvent);
           eventInput.recordMotionEvent(motionEvent);
           return false;
         }
@@ -231,7 +237,6 @@ public class FloatTools {
     if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
       AccessibilityUtil.openSetting(activity);
     } else {
-
       addTouchLayer();
     }
   }

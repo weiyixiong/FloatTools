@@ -1,5 +1,6 @@
 package com.wyx.flexdemo;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -16,7 +17,8 @@ public class MainActivity extends AppCompatActivity {
     findViewById(R.id.test_btn).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        Toast.makeText(getBaseContext(), "sdfsd", Toast.LENGTH_SHORT).show();
+        Intent i = new Intent(MainActivity.this, SecondActivity.class);
+        startActivity(i);
       }
     });
   }
