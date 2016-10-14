@@ -21,9 +21,9 @@ public class MainActivity extends AppCompatActivity {
     });
   }
 
-  @Override
-  public boolean dispatchTouchEvent(MotionEvent ev) {
-    L.e(ev.toString());
-    return super.dispatchTouchEvent(ev);
-  }
+  //@Override
+  //public boolean dispatchTouchEvent(MotionEvent ev) {
+  //  L.e(ev.toString());
+  //  return super.dispatchTouchEvent(ev);
+  //}
 }

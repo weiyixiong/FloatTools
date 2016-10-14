@@ -2,6 +2,7 @@ package com.wyx.flex;
 
 import android.app.Activity;
 import android.app.Application;
+import android.app.usage.UsageEvents;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -9,10 +10,13 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -21,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -28,6 +33,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 import com.wyx.flex.parser.ViewParser;
 import com.wyx.flex.util.AccessibilityUtil;
 import com.wyx.flex.util.EventInput;
@@ -47,6 +53,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import org.w3c.dom.Text;
 
 /**
  * Created by winney on 16/4/28.
@@ -56,9 +64,16 @@ public class FloatTools {
   private static final String TAG = "FloatTools";
   public static final String RESET = "resetAction";
 
-  private static Application application;
+  private static final int RECORDING = 0;
+  private static final int STOPPED = 1;
+  private static final int INPUTING = 2;
 
+  private static Application application;
+  private static FloatTools instance;
   private static RelativeLayout mFloatLayout;
+  private WeakReference<Activity> currentActivity;
+  private WeakReference<EditText> currentEditText;
+
   private FrameLayout touchLayer;
   private WindowManager.LayoutParams wmParams;
   private WindowManager mWindowManager;
@@ -72,14 +87,13 @@ public class FloatTools {
   private ImageView dragArea;
   private TextView logInfo;
   private ScrollView logCatWrapper;
-  private WeakReference<Activity> currentActivity;
-  private static FloatTools instance;
+
   private PointF touchDownPoint;
   private static SensorManager mSensorManager;
   private static Sensor mAccelerometer;
   private ShakeDetector mShakeDetector;
   private int floatViewStatus = View.INVISIBLE;
-  private int touchLayerStatus = View.INVISIBLE;
+  private int touchLayerStatus = STOPPED;
   private static FloatConfig config = new FloatConfig();
   private static EventInput eventInput = new EventInput();
 
@@ -107,7 +121,8 @@ public class FloatTools {
 
       @Override
       public void onActivityPaused(Activity activity) {
-
+        instance.hideFloatTools();
+        instance.removeTouchLayer();
       }
 
       @Override
@@ -207,6 +222,7 @@ public class FloatTools {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
           activity.dispatchTouchEvent(motionEvent);
+          //activity.getWindow().superDispatchTouchEvent(motionEvent);
           eventInput.recordMotionEvent(motionEvent);
           return false;
         }
@@ -215,22 +231,49 @@ public class FloatTools {
     if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
       AccessibilityUtil.openSetting(activity);
     } else {
-      hideFloatTools();
+
       addTouchLayer();
-      showFloatTools();
     }
   }
 
+  public void hideIME(TextView view) {
+    Activity activity = this.currentActivity.get();
+    InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+  }
+
   public void setEditorListener() {
+    btnRecord.setText("complete input");
+    touchLayerStatus = INPUTING;
     List<View> allChildViews = getAllChildViews(this.currentActivity.get());
     for (View allChildView : allChildViews) {
       if (allChildView instanceof EditText) {
-        EditText editText = (EditText) allChildView;
+        final EditText editText = (EditText) allChildView;
+        editText.addTextChangedListener(new TextWatcher() {
+          @Override
+          public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+          }
+
+          @Override
+          public void onTextChanged(CharSequence s, int start, int before, int count) {
+            if (touchLayerStatus == STOPPED) {
+              return;
+            }
+            if (currentEditText == null || currentEditText.get() != editText) {
+              currentEditText = new WeakReference<>(editText);
+            }
+          }
+
+          @Override
+          public void afterTextChanged(Editable s) {
+
+          }
+        });
         editText.setOnEditorActionListener(new EditText.OnEditorActionListener() {
           public boolean onEditorAction(TextView view, int action, KeyEvent event) {
             if (isSoftKeyboardFinishedAction(view, action, event)) {
-              eventInput.recordEditEvent(view.getX(), view.getY(), view.getText().toString());
-              addTouchLayer();
+              completeInput(view);
             }
             return false;
           }
@@ -239,8 +282,22 @@ public class FloatTools {
     }
   }
 
+  private void completeInput() {
+    EditText view = this.currentEditText.get();
+    completeInput(view);
+  }
+
+  private void completeInput(TextView view) {
+    hideIME(view);
+    Rect rect = new Rect();
+    view.getGlobalVisibleRect(rect);
+    eventInput.recordEditEvent(rect.left + 1, rect.top + 1, view.getText().toString());
+    addTouchLayer();
+  }
+
   public void addTouchLayer() {
-    if (touchLayerStatus == View.INVISIBLE) {
+    if (touchLayerStatus == STOPPED || touchLayerStatus == INPUTING) {
+      hideFloatTools();
       WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
       wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
       wmParams.format = PixelFormat.RGBA_8888;
@@ -252,14 +309,24 @@ public class FloatTools {
       wmParams.width = WindowManager.LayoutParams.MATCH_PARENT;
       wmParams.height = WindowManager.LayoutParams.MATCH_PARENT;
       mWindowManager.addView(touchLayer, wmParams);
-      touchLayerStatus = View.VISIBLE;
+      touchLayerStatus = RECORDING;
+      showFloatTools();
+      btnRecord.setText("stop");
+      Toast.makeText(this.currentActivity.get(), "started", Toast.LENGTH_SHORT).show();
     }
   }
 
   public void removeTouchLayer() {
-    if (touchLayerStatus == View.VISIBLE) {
+    if (touchLayerStatus == RECORDING) {
       mWindowManager.removeView(touchLayer);
-      touchLayerStatus = View.INVISIBLE;
+      touchLayerStatus = STOPPED;
+    }
+  }
+
+  public void startInputMode() {
+    if (touchLayerStatus == RECORDING) {
+      removeTouchLayer();
+      setEditorListener();
     }
   }
 
@@ -336,14 +403,23 @@ public class FloatTools {
     btnRecord.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        installLayer(activity);
+        if (touchLayerStatus == RECORDING) {
+          removeTouchLayer();
+          btnRecord.setText("record");
+          Toast.makeText(activity, "stopped", Toast.LENGTH_SHORT).show();
+        } else if (touchLayerStatus == STOPPED) {
+          installLayer(activity);
+        } else {
+          completeInput();
+        }
       }
     });
     btnRecord.setOnLongClickListener(new View.OnLongClickListener() {
       @Override
       public boolean onLongClick(View v) {
         eventInput.clear();
-        return false;
+        Toast.makeText(activity, "cleared", Toast.LENGTH_SHORT).show();
+        return true;
       }
     });
     if (config.isTriggerEnabled()) {
@@ -377,6 +453,27 @@ public class FloatTools {
 
   public void onTouch(MotionEvent event) {
     this.currentActivity.get().dispatchTouchEvent(event);
+  }
+
+  public void onEdit(EventInput.RecordEvent event) {
+    List<View> allChildViews = getAllChildViews(this.currentActivity.get());
+    float x = event.getX();
+    float y = event.getY();
+
+    for (View item : allChildViews) {
+      if (item instanceof EditText) {
+        if (isInside(x, y, item)) {
+          ((EditText) item).setText(event.getText());
+        }
+      }
+    }
+  }
+
+  private boolean isInside(float x, float y, View child) {
+    Rect rect = new Rect();
+    child.getGlobalVisibleRect(rect);
+    return x >= rect.left && x < rect.right &&
+        y >= rect.top && y < rect.bottom;
   }
 
   private static Runnable triggerEvent;

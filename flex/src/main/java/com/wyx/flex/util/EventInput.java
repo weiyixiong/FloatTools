@@ -21,10 +21,12 @@ import java.util.ArrayList;
  */
 public class EventInput {
 
-  Method injectInputEventMethod;
-  InputManager im;
-  ArrayList<RecordEvent> record = new ArrayList<>();
-  ReplayHandler handler;
+  private Method injectInputEventMethod;
+  private InputManager im;
+  private ArrayList<RecordEvent> record = new ArrayList<>();
+  private ReplayHandler handler;
+  private static final int TOUCH = 0;
+  private static final int INPUT = 1;
 
   public EventInput() {
 
@@ -75,10 +77,15 @@ public class EventInput {
         timeDiff = record.get(i).time - record.get(0).time;
       }
       RecordEvent event = record.get(i);
-      MotionEvent motionEvent = MotionEvent.obtain(event.event);
-      MotionEvent event1 =
-          buildEvent(motionEvent.getAction(), startTime + timeDiff, motionEvent.getRawX(), motionEvent.getRawY(), 1.0f);
-      handler.sendMessageDelayed(handler.obtainMessage(0, event1), timeDiff);
+      if (event.type == EventType.TOUCH) {
+        MotionEvent motionEvent = event.event;
+        MotionEvent event1 =
+            buildEvent(motionEvent.getAction(), startTime + timeDiff, motionEvent.getRawX(), motionEvent.getRawY(),
+                       1.0f);
+        handler.sendMessageDelayed(handler.obtainMessage(TOUCH, event1), timeDiff);
+      } else {
+        handler.sendMessageDelayed(handler.obtainMessage(INPUT, event), timeDiff);
+      }
     }
   }
 
@@ -117,6 +124,18 @@ public class EventInput {
       this.y = y;
       this.time = time;
     }
+
+    public String getText() {
+      return text;
+    }
+
+    public float getX() {
+      return x;
+    }
+
+    public float getY() {
+      return y;
+    }
   }
 
   public enum EventType {
@@ -127,10 +146,14 @@ public class EventInput {
     @Override
     public void handleMessage(Message msg) {
       super.handleMessage(msg);
-      L.e(msg.obj.toString());
-      FloatTools.getInstance().onTouch((MotionEvent) msg.obj);
-      //Runnable obj = (Runnable) msg.obj;
-      //obj.run();
+      switch (msg.what) {
+        case TOUCH:
+          FloatTools.getInstance().onTouch((MotionEvent) msg.obj);
+          break;
+        case INPUT:
+          FloatTools.getInstance().onEdit((RecordEvent) msg.obj);
+          break;
+      }
     }
   }
 }

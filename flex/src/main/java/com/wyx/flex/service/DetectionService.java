@@ -47,9 +47,9 @@ public class DetectionService extends AccessibilityService {
         ComponentName cName = new ComponentName(event.getPackageName().toString(), event.getClassName().toString());
         break;
       case AccessibilityEvent.TYPE_VIEW_FOCUSED:
+      case AccessibilityEvent.TYPE_VIEW_CLICKED:
         if (event.getClassName().equals("android.widget.EditText")) {
-          FloatTools.getInstance().removeTouchLayer();
-          FloatTools.getInstance().setEditorListener();
+          FloatTools.getInstance().startInputMode();
         }
         break;
     }
