@@ -221,7 +221,7 @@ public class FloatTools {
       touchLayer.setOnTouchListener(new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
-          activity.dispatchTouchEvent(motionEvent);
+          currentActivity.get().dispatchTouchEvent(motionEvent);
           //activity.getWindow().superDispatchTouchEvent(motionEvent);
           eventInput.recordMotionEvent(motionEvent);
           return false;
