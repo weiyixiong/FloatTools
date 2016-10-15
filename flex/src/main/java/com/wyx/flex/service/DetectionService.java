@@ -49,7 +49,7 @@ public class DetectionService extends AccessibilityService {
       case AccessibilityEvent.TYPE_VIEW_FOCUSED:
       case AccessibilityEvent.TYPE_VIEW_CLICKED:
         if (event.getClassName().equals("android.widget.EditText")) {
-          FloatTools.getInstance().startInputMode();
+          FloatTools.getInstance().startInputing();
         }
         break;
     }

@@ -68,6 +68,10 @@ public class EventInput {
     record.add(new RecordEvent(text, x, y, getCurrentTime()));
   }
 
+  public void recordEditEvent(String viewId, String s) {
+    record.add(new RecordEvent(viewId, s, getCurrentTime()));
+  }
+
   public void replay() {
     handler = new ReplayHandler();
     long startTime = getCurrentTime();
@@ -110,6 +114,7 @@ public class EventInput {
     private float x;
     private float y;
     private long time;
+    private String resName;
 
     public RecordEvent(MotionEvent event, long time) {
       this.event = event;
@@ -125,8 +130,18 @@ public class EventInput {
       this.time = time;
     }
 
+    public RecordEvent(String viewId, String s, long currentTime) {
+      this.resName = viewId;
+      this.text = s;
+      this.time = currentTime;
+    }
+
     public String getText() {
       return text;
+    }
+
+    public String getResName() {
+      return resName;
     }
 
     public float getX() {

@@ -2,7 +2,6 @@ package com.wyx.flex;
 
 import android.app.Activity;
 import android.app.Application;
-import android.app.usage.UsageEvents;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -53,8 +52,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import org.w3c.dom.Text;
 
 /**
  * Created by winney on 16/4/28.
@@ -97,7 +94,7 @@ public class FloatTools {
   private static FloatConfig config = new FloatConfig();
   private static EventInput eventInput = new EventInput();
 
-  private static int activityCount = 0;
+  private static int recordingStatus = STOPPED;
 
   public static void init(Application application) {
     FloatTools.application = application;
@@ -119,17 +116,20 @@ public class FloatTools {
       @Override
       public void onActivityResumed(Activity activity) {
         instance.setAndDumpActivity(activity);
-        if (activityCount > 0) {
-          activityCount--;
+        if (recordingStatus == RECORDING) {
           instance.installLayer(activity);
         }
       }
 
       @Override
       public void onActivityPaused(Activity activity) {
-        instance.hideFloatTools();
-        instance.removeTouchLayer();
-        activityCount++;
+        if (instance.touchLayerStatus == RECORDING) {
+          recordingStatus = RECORDING;
+          instance.hideFloatTools();
+          instance.stopRecording();
+        } else {
+          recordingStatus = STOPPED;
+        }
       }
 
       @Override
@@ -237,7 +237,7 @@ public class FloatTools {
     if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
       AccessibilityUtil.openSetting(activity);
     } else {
-      addTouchLayer();
+      startRecording();
     }
   }
 
@@ -248,8 +248,6 @@ public class FloatTools {
   }
 
   public void setEditorListener() {
-    btnRecord.setText("complete input");
-    touchLayerStatus = INPUTING;
     List<View> allChildViews = getAllChildViews(this.currentActivity.get());
     for (View allChildView : allChildViews) {
       if (allChildView instanceof EditText) {
@@ -285,6 +283,18 @@ public class FloatTools {
         });
       }
     }
+    touchLayerStatus = INPUTING;
+    updateRecordBthText();
+  }
+
+  private void updateRecordBthText() {
+    if (touchLayerStatus == STOPPED) {
+      btnRecord.setText("Record");
+    } else if (touchLayerStatus == RECORDING) {
+      btnRecord.setText("stop");
+    } else {
+      btnRecord.setText("complete input");
+    }
   }
 
   private void completeInput() {
@@ -294,43 +304,68 @@ public class FloatTools {
 
   private void completeInput(TextView view) {
     hideIME(view);
-    Rect rect = new Rect();
-    view.getGlobalVisibleRect(rect);
-    eventInput.recordEditEvent(rect.left + 1, rect.top + 1, view.getText().toString());
-    addTouchLayer();
+    //String viewId = this.currentActivity.get().getResources().getResourceName(view.getId());
+    if (view.getId() == View.NO_ID) {
+      Rect rect = new Rect();
+      view.getGlobalVisibleRect(rect);
+      eventInput.recordEditEvent(rect.left + 1, rect.top + 1, view.getText().toString());
+    } else {
+      String viewId = this.currentActivity.get().getResources().getResourceName(view.getId());
+      eventInput.recordEditEvent(viewId, view.getText().toString());
+    }
+    startRecording();
   }
 
-  public void addTouchLayer() {
-    if (touchLayerStatus == STOPPED || touchLayerStatus == INPUTING) {
-      hideFloatTools();
-      WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
-      wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
-      wmParams.format = PixelFormat.RGBA_8888;
-      wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-      wmParams.gravity = Gravity.LEFT | Gravity.TOP;
-      wmParams.x = 0;
-      wmParams.y = 0;
+  public void startRecording() {
+    Activity activity = this.currentActivity.get();
+    if (touchLayer == null) {
+      touchLayer = new FrameLayout(activity.getApplicationContext());
+      touchLayer.setBackgroundColor(Color.TRANSPARENT);
+      touchLayer.setOnTouchListener(new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+          currentActivity.get().dispatchTouchEvent(motionEvent);
+          eventInput.recordMotionEvent(motionEvent);
+          return false;
+        }
+      });
+    }
+    if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
+      AccessibilityUtil.openSetting(activity);
+    } else {
+      if (touchLayerStatus == STOPPED || touchLayerStatus == INPUTING) {
+        hideFloatTools();
+        WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
+        wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
+        wmParams.format = PixelFormat.RGBA_8888;
+        wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        wmParams.gravity = Gravity.LEFT | Gravity.TOP;
+        wmParams.x = 0;
+        wmParams.y = 0;
 
-      wmParams.width = WindowManager.LayoutParams.MATCH_PARENT;
-      wmParams.height = WindowManager.LayoutParams.MATCH_PARENT;
-      mWindowManager.addView(touchLayer, wmParams);
-      touchLayerStatus = RECORDING;
-      showFloatTools();
-      btnRecord.setText("stop");
-      Toast.makeText(this.currentActivity.get(), "started", Toast.LENGTH_SHORT).show();
+        wmParams.width = WindowManager.LayoutParams.MATCH_PARENT;
+        wmParams.height = WindowManager.LayoutParams.MATCH_PARENT;
+        mWindowManager.addView(touchLayer, wmParams);
+        showFloatTools();
+        touchLayerStatus = RECORDING;
+        Toast.makeText(this.currentActivity.get(), "started", Toast.LENGTH_SHORT).show();
+        updateRecordBthText();
+      }
     }
   }
 
-  public void removeTouchLayer() {
+  public void stopRecording() {
     if (touchLayerStatus == RECORDING) {
       mWindowManager.removeView(touchLayer);
       touchLayerStatus = STOPPED;
+      updateRecordBthText();
+      Toast.makeText(this.currentActivity.get(), "stopped", Toast.LENGTH_SHORT).show();
     }
   }
 
-  public void startInputMode() {
+  public void startInputing() {
     if (touchLayerStatus == RECORDING) {
-      removeTouchLayer();
+      stopRecording();
       setEditorListener();
     }
   }
@@ -409,11 +444,9 @@ public class FloatTools {
       @Override
       public void onClick(View view) {
         if (touchLayerStatus == RECORDING) {
-          removeTouchLayer();
-          btnRecord.setText("record");
-          Toast.makeText(activity, "stopped", Toast.LENGTH_SHORT).show();
+          stopRecording();
         } else if (touchLayerStatus == STOPPED) {
-          installLayer(activity);
+          startRecording();
         } else {
           completeInput();
         }
@@ -461,14 +494,20 @@ public class FloatTools {
   }
 
   public void onEdit(EventInput.RecordEvent event) {
-    List<View> allChildViews = getAllChildViews(this.currentActivity.get());
-    float x = event.getX();
-    float y = event.getY();
-
-    for (View item : allChildViews) {
-      if (item instanceof EditText) {
-        if (isInside(x, y, item)) {
-          ((EditText) item).setText(event.getText());
+    Activity activity = this.currentActivity.get();
+    if (event.getResName() != null) {
+      int identifier = activity.getResources().getIdentifier(event.getResName(), null, null);
+      EditText editText = (EditText) activity.findViewById(identifier);
+      editText.setText(event.getText());
+    } else {
+      List<View> allChildViews = getAllChildViews(activity);
+      float x = event.getX();
+      float y = event.getY();
+      for (View item : allChildViews) {
+        if (item instanceof EditText) {
+          if (isInside(x, y, item)) {
+            ((EditText) item).setText(event.getText());
+          }
         }
       }
     }
