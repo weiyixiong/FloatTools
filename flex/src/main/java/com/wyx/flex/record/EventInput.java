@@ -1,4 +1,4 @@
-package com.wyx.flex.util;
+package com.wyx.flex.record;
 
 import android.hardware.input.InputManager;
 import android.os.Handler;
@@ -78,11 +78,11 @@ public class EventInput {
     for (int i = 0; i < record.size(); i++) {
       long timeDiff = 0;
       if (i != 0) {
-        timeDiff = record.get(i).time - record.get(0).time;
+        timeDiff = record.get(i).getTime() - record.get(0).getTime();
       }
       RecordEvent event = record.get(i);
-      if (event.type == EventType.TOUCH) {
-        MotionEvent motionEvent = event.event;
+      if (event.getType() == EventType.TOUCH) {
+        MotionEvent motionEvent = event.getEvent();
         MotionEvent event1 =
             buildEvent(motionEvent.getAction(), startTime + timeDiff, motionEvent.getRawX(), motionEvent.getRawY(),
                        1.0f);
@@ -105,56 +105,6 @@ public class EventInput {
 
   public void clear() {
     record.clear();
-  }
-
-  public static class RecordEvent {
-    private EventType type;
-    private MotionEvent event;
-    private String text;
-    private float x;
-    private float y;
-    private long time;
-    private String resName;
-
-    public RecordEvent(MotionEvent event, long time) {
-      this.event = event;
-      this.type = EventType.TOUCH;
-      this.time = time;
-    }
-
-    public RecordEvent(String text, float x, float y, long time) {
-      this.type = EventType.EDIT;
-      this.text = text;
-      this.x = x;
-      this.y = y;
-      this.time = time;
-    }
-
-    public RecordEvent(String viewId, String s, long currentTime) {
-      this.resName = viewId;
-      this.text = s;
-      this.time = currentTime;
-    }
-
-    public String getText() {
-      return text;
-    }
-
-    public String getResName() {
-      return resName;
-    }
-
-    public float getX() {
-      return x;
-    }
-
-    public float getY() {
-      return y;
-    }
-  }
-
-  public enum EventType {
-    EDIT, TOUCH
   }
 
   private static class ReplayHandler extends Handler {

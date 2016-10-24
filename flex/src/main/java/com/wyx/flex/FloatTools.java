@@ -34,8 +34,9 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.wyx.flex.parser.ViewParser;
+import com.wyx.flex.record.RecordEvent;
 import com.wyx.flex.util.AccessibilityUtil;
-import com.wyx.flex.util.EventInput;
+import com.wyx.flex.record.EventInput;
 import com.wyx.flex.util.FloatConfig;
 import com.wyx.flex.util.L;
 import com.wyx.flex.util.LogCatUtil;
@@ -493,7 +494,7 @@ public class FloatTools {
     this.currentActivity.get().dispatchTouchEvent(event);
   }
 
-  public void onEdit(EventInput.RecordEvent event) {
+  public void onEdit(RecordEvent event) {
     Activity activity = this.currentActivity.get();
     if (event.getResName() != null) {
       int identifier = activity.getResources().getIdentifier(event.getResName(), null, null);
