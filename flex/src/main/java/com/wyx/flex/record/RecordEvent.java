@@ -1,15 +1,24 @@
 package com.wyx.flex.record;
 
 import android.view.MotionEvent;
+import com.activeandroid.Model;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
 
-public class RecordEvent {
-  private EventType type;
-  private MotionEvent event;
-  private String text;
-  private float x;
-  private float y;
-  private long time;
-  private String resName;
+@Table(name = "RecordEvent")
+public class RecordEvent extends Model {
+  @Column(name = "recordId") long recordId;
+  @Column(name = "EventType") EventType type;
+  @Column(name = "event") MotionEvent event;
+  @Column(name = "String") String text;
+  @Column(name = "x") float x;
+  @Column(name = "y") float y;
+  @Column(name = "time") long time;
+  @Column(name = "resName") String resName;
+
+  public RecordEvent() {
+    super();
+  }
 
   public RecordEvent(MotionEvent event, long time) {
     this.event = event;

@@ -33,7 +33,7 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.wyx.flex.parser.ViewParser;
+import com.activeandroid.ActiveAndroid;
 import com.wyx.flex.record.RecordEvent;
 import com.wyx.flex.util.AccessibilityUtil;
 import com.wyx.flex.record.EventInput;
@@ -42,16 +42,10 @@ import com.wyx.flex.util.L;
 import com.wyx.flex.util.LogCatUtil;
 import com.wyx.flex.util.Navgation;
 import com.wyx.flex.util.ShakeDetector;
-import com.wyx.flex.util.StorageUtils;
+import com.wyx.flex.util.ViewUtil;
 import com.wyx.flex.view.BorderImageView;
 import com.wyx.flex.view.DragLayout;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.OutputStream;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -64,7 +58,7 @@ public class FloatTools {
 
   private static final int RECORDING = 0;
   private static final int STOPPED = 1;
-  private static final int INPUTING = 2;
+  private static final int INPUTTING = 2;
 
   private static Application application;
   private static FloatTools instance;
@@ -98,11 +92,11 @@ public class FloatTools {
   private static int recordingStatus = STOPPED;
 
   public static void init(Application application) {
+    ActiveAndroid.initialize(application);
     FloatTools.application = application;
     instance = new FloatTools();
     mSensorManager = (SensorManager) application.getSystemService(Context.SENSOR_SERVICE);
     mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
     application.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
       @Override
       public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
@@ -249,7 +243,7 @@ public class FloatTools {
   }
 
   public void setEditorListener() {
-    List<View> allChildViews = getAllChildViews(this.currentActivity.get());
+    List<View> allChildViews = ViewUtil.getAllChildViews(this.currentActivity.get());
     for (View allChildView : allChildViews) {
       if (allChildView instanceof EditText) {
         final EditText editText = (EditText) allChildView;
@@ -284,7 +278,7 @@ public class FloatTools {
         });
       }
     }
-    touchLayerStatus = INPUTING;
+    touchLayerStatus = INPUTTING;
     updateRecordBthText();
   }
 
@@ -305,7 +299,6 @@ public class FloatTools {
 
   private void completeInput(TextView view) {
     hideIME(view);
-    //String viewId = this.currentActivity.get().getResources().getResourceName(view.getId());
     if (view.getId() == View.NO_ID) {
       Rect rect = new Rect();
       view.getGlobalVisibleRect(rect);
@@ -334,7 +327,7 @@ public class FloatTools {
     if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
       AccessibilityUtil.openSetting(activity);
     } else {
-      if (touchLayerStatus == STOPPED || touchLayerStatus == INPUTING) {
+      if (touchLayerStatus == STOPPED || touchLayerStatus == INPUTTING) {
         hideFloatTools();
         WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
         wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
@@ -360,7 +353,38 @@ public class FloatTools {
       mWindowManager.removeView(touchLayer);
       touchLayerStatus = STOPPED;
       updateRecordBthText();
-      Toast.makeText(this.currentActivity.get(), "stopped", Toast.LENGTH_SHORT).show();
+      Activity context = this.currentActivity.get();
+      WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
+      wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
+      wmParams.format = PixelFormat.RGBA_8888;
+      wmParams.gravity = Gravity.CENTER;
+      wmParams.x = 0;
+      wmParams.y = 0;
+      wmParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+      LayoutInflater inflater = LayoutInflater.from(context);
+      final ViewGroup inputDialog = (ViewGroup) inflater.inflate(R.layout.dialog_name_input, null);
+      inputDialog.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+      Button cancel = (Button) inputDialog.findViewById(R.id.btn_cancel);
+      Button ok = (Button) inputDialog.findViewById(R.id.btn_ok);
+      final EditText recordName = (EditText) inputDialog.findViewById(R.id.text_record_name);
+
+      cancel.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          mWindowManager.removeView(inputDialog);
+        }
+      });
+      ok.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          eventInput.saveRecord(recordName.getText().toString());
+          mWindowManager.removeView(inputDialog);
+        }
+      });
+
+      mWindowManager.addView(inputDialog, wmParams);
+      Toast.makeText(context, "stopped", Toast.LENGTH_SHORT).show();
     }
   }
 
@@ -501,12 +525,12 @@ public class FloatTools {
       EditText editText = (EditText) activity.findViewById(identifier);
       editText.setText(event.getText());
     } else {
-      List<View> allChildViews = getAllChildViews(activity);
+      List<View> allChildViews = ViewUtil.getAllChildViews(activity);
       float x = event.getX();
       float y = event.getY();
       for (View item : allChildViews) {
         if (item instanceof EditText) {
-          if (isInside(x, y, item)) {
+          if (ViewUtil.isInside(x, y, item)) {
             ((EditText) item).setText(event.getText());
           }
         }
@@ -514,12 +538,6 @@ public class FloatTools {
     }
   }
 
-  private boolean isInside(float x, float y, View child) {
-    Rect rect = new Rect();
-    child.getGlobalVisibleRect(rect);
-    return x >= rect.left && x < rect.right &&
-        y >= rect.top && y < rect.bottom;
-  }
 
   private static Runnable triggerEvent;
 
@@ -569,9 +587,9 @@ public class FloatTools {
     return new View.OnClickListener() {
       @Override
       public void onClick(final View v) {
-        dumpView(activity);
+        ViewUtil.dumpView(activity);
         ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
-        List<View> allChildViews = getAllChildViews(activity);
+        List<View> allChildViews = ViewUtil.getAllChildViews(activity);
         DragLayout parent = (DragLayout) root.findViewWithTag(TAG);
 
         if (parent == null) {
@@ -583,14 +601,14 @@ public class FloatTools {
 
         parent.setBackgroundColor(Color.WHITE);
         parent.removeAllViews();
-        addView(activity, parent, root, 0, 0);
+        addFakeView(activity, parent, root, 0, 0);
 
         root.addView(parent);
       }
     };
   }
 
-  private void addView(final Activity activity, ViewGroup parent, ViewGroup origin, int top, int left) {
+  private void addFakeView(final Activity activity, ViewGroup parent, ViewGroup origin, int top, int left) {
     for (int i = 0; i < origin.getChildCount(); i++) {
       final View view = origin.getChildAt(i);
       L.e(view.getClass());
@@ -607,7 +625,7 @@ public class FloatTools {
         params.leftMargin = location[0] - left;
         frameLayout.setLayoutParams(params);
         parent.addView(frameLayout);
-        addView(activity, frameLayout, (ViewGroup) view, location[1], location[0]);
+        addFakeView(activity, frameLayout, (ViewGroup) view, location[1], location[0]);
         frameLayout.setOnLongClickListener(new View.OnLongClickListener() {
           @Override
           public boolean onLongClick(View v) {
@@ -640,73 +658,6 @@ public class FloatTools {
         });
       }
     }
-  }
-
-  /**
-   * dump view info and parse it
-   *
-   * @param activity the activity you want to dump view
-   */
-  private void dumpView(Activity activity) {
-    ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
-    File dumpDir = StorageUtils.getIndividualCacheDirectory(activity, "viewData");
-    if (!dumpDir.exists()) {
-      dumpDir.mkdirs();
-    }
-    File dump = new File(dumpDir.getAbsolutePath() + "/dump.txt");
-    OutputStream outputStream = null;
-    try {
-      ByteArrayOutputStream stream = getByteArrayOutputStream(root);
-      ViewParser.parser(stream.toByteArray());
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  /**
-   * use reflection to call the ViewHierarchyEncoder and dump view as Stream
-   *
-   * @throws ClassNotFoundException
-   * @throws NoSuchMethodException
-   * @throws InstantiationException
-   * @throws IllegalAccessException
-   * @throws java.lang.reflect.InvocationTargetException
-   */
-  @NonNull
-  private ByteArrayOutputStream getByteArrayOutputStream(ViewGroup root)
-      throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException,
-             java.lang.reflect.InvocationTargetException {
-    ByteArrayOutputStream stream = new ByteArrayOutputStream(32 * 1024);
-    Class<?> viewHierarchyEncoder = Class.forName("android.view.ViewHierarchyEncoder");
-    Constructor viewDumpCon = viewHierarchyEncoder.getConstructor(ByteArrayOutputStream.class);
-
-    Method dumpV2 = View.class.getDeclaredMethod("encode", viewHierarchyEncoder);
-    dumpV2.setAccessible(true);
-
-    Object o = viewDumpCon.newInstance(stream);
-
-    Method endStream = viewHierarchyEncoder.getDeclaredMethod("endStream");
-    dumpV2.invoke(root, o);
-    endStream.invoke(o);
-    return stream;
-  }
-
-  private static List<View> getAllChildViews(Activity activity) {
-    View view = activity.getWindow().getDecorView();
-    return getAllChildViews(view);
-  }
-
-  private static List<View> getAllChildViews(View view) {
-    List<View> allChildren = new ArrayList<View>();
-    if (view instanceof ViewGroup) {
-      ViewGroup vp = (ViewGroup) view;
-      for (int i = 0; i < vp.getChildCount(); i++) {
-        View viewChild = vp.getChildAt(i);
-        allChildren.add(viewChild);
-        allChildren.addAll(getAllChildViews(viewChild));
-      }
-    }
-    return allChildren;
   }
 
   public static void setDebug(boolean debug) {

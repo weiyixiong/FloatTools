@@ -107,6 +107,17 @@ public class EventInput {
     record.clear();
   }
 
+  public void saveRecord(String name) {
+    Record record = new Record();
+    record.time = SystemClock.uptimeMillis();
+    record.name=name;
+    Long recordId = record.save();
+    for (RecordEvent recordEvent : this.record) {
+      recordEvent.recordId = recordId;
+      recordEvent.save();
+    }
+  }
+
   private static class ReplayHandler extends Handler {
     @Override
     public void handleMessage(Message msg) {
