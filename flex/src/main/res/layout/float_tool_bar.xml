@@ -10,6 +10,7 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:orientation="vertical"
+      android:gravity="center_horizontal"
       >
 
     <ImageView
@@ -19,7 +20,8 @@
         android:clickable="true"
         android:padding="8dp"
         android:src="@drawable/ic_drag_area"
-        android:background="@color/grey2a"
+        android:background="@color/grey"
+        android:layout_gravity="center"
         />
 
     <Button

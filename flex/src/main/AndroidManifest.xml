@@ -32,6 +32,10 @@
         android:name=".activity.LogCatActivity"
         android:launchMode="singleInstance"
         />
+    <activity
+        android:name=".activity.RecordActivity"
+        android:launchMode="singleInstance"
+        />
 
     <service
         android:name="com.wyx.flex.service.DetectionService"

@@ -4,12 +4,14 @@ import android.view.MotionEvent;
 import com.activeandroid.Model;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
+import com.activeandroid.query.Select;
+import java.util.List;
 
 @Table(name = "RecordEvent")
 public class RecordEvent extends Model {
   @Column(name = "recordId") long recordId;
   @Column(name = "EventType") EventType type;
-  @Column(name = "event") MotionEvent event;
+  @Column(name = "eventAction") int eventAction;
   @Column(name = "String") String text;
   @Column(name = "x") float x;
   @Column(name = "y") float y;
@@ -20,10 +22,16 @@ public class RecordEvent extends Model {
     super();
   }
 
-  public RecordEvent(MotionEvent event, long time) {
-    this.event = event;
+  public RecordEvent(int action, float x, float y, long time) {
     this.type = EventType.TOUCH;
+    this.eventAction = action;
+    this.x = x;
+    this.y = y;
     this.time = time;
+  }
+
+  public static List<RecordEvent> getAllRecordEventByID(long recordId) {
+    return new Select().all().from(RecordEvent.class).where("recordId =?", recordId).orderBy("time ASC").execute();
   }
 
   public RecordEvent(String text, float x, float y, long time) {
@@ -44,8 +52,8 @@ public class RecordEvent extends Model {
     return type;
   }
 
-  public MotionEvent getEvent() {
-    return event;
+  public int getEventAction() {
+    return eventAction;
   }
 
   public long getTime() {

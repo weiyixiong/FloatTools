@@ -13,20 +13,18 @@ import com.wyx.flex.FloatTools;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Created by omerjerk on 19/9/15.
- *
- * Class to create seamless input/touch events on your Android device without root
- */
 public class EventInput {
 
   private Method injectInputEventMethod;
   private InputManager im;
-  private ArrayList<RecordEvent> record = new ArrayList<>();
-  private ReplayHandler handler;
+  private static List<RecordEvent> records = new ArrayList<>();
+  private static ReplayHandler handler;
   private static final int TOUCH = 0;
   private static final int INPUT = 1;
+
+  private static String startActivity;
 
   public EventInput() {
 
@@ -56,36 +54,34 @@ public class EventInput {
     injectInputEventMethod.invoke(im, new Object[] { event, Integer.valueOf(0) });
   }
 
-  private long getCurrentTime() {
+  private static long getCurrentTime() {
     return SystemClock.uptimeMillis();
   }
 
-  public void recordMotionEvent(MotionEvent event) {
-    record.add(new RecordEvent(MotionEvent.obtain(event), getCurrentTime()));
+  public static void recordMotionEvent(MotionEvent event) {
+    records.add(
+        new RecordEvent(MotionEvent.obtain(event).getAction(), event.getRawX(), event.getRawY(), getCurrentTime()));
   }
 
-  public void recordEditEvent(float x, float y, String text) {
-    record.add(new RecordEvent(text, x, y, getCurrentTime()));
+  public static void recordEditEvent(float x, float y, String text) {
+    records.add(new RecordEvent(text, x, y, getCurrentTime()));
   }
 
-  public void recordEditEvent(String viewId, String s) {
-    record.add(new RecordEvent(viewId, s, getCurrentTime()));
+  public static void recordEditEvent(String viewId, String s) {
+    records.add(new RecordEvent(viewId, s, getCurrentTime()));
   }
 
-  public void replay() {
+  public static void replay() {
     handler = new ReplayHandler();
     long startTime = getCurrentTime();
-    for (int i = 0; i < record.size(); i++) {
+    for (int i = 0; i < records.size(); i++) {
       long timeDiff = 0;
       if (i != 0) {
-        timeDiff = record.get(i).getTime() - record.get(0).getTime();
+        timeDiff = records.get(i).getTime() - records.get(0).getTime();
       }
-      RecordEvent event = record.get(i);
+      RecordEvent event = records.get(i);
       if (event.getType() == EventType.TOUCH) {
-        MotionEvent motionEvent = event.getEvent();
-        MotionEvent event1 =
-            buildEvent(motionEvent.getAction(), startTime + timeDiff, motionEvent.getRawX(), motionEvent.getRawY(),
-                       1.0f);
+        MotionEvent event1 = buildEvent(event.getEventAction(), startTime + timeDiff, event.getX(), event.getY(), 1.0f);
         handler.sendMessageDelayed(handler.obtainMessage(TOUCH, event1), timeDiff);
       } else {
         handler.sendMessageDelayed(handler.obtainMessage(INPUT, event), timeDiff);
@@ -93,7 +89,7 @@ public class EventInput {
     }
   }
 
-  public MotionEvent buildEvent(int action, long when, float x, float y, float pressure) {
+  public static MotionEvent buildEvent(int action, long when, float x, float y, float pressure) {
     MotionEvent obtain = MotionEvent.obtain(when, when, action, x, y, pressure, 1.0f, 0, 1.0f, 1.0f, 0, 0);
     obtain.setSource(InputDeviceCompat.SOURCE_TOUCHSCREEN);
     return obtain;
@@ -103,19 +99,34 @@ public class EventInput {
     injectInputEventMethod.invoke(im, new Object[] { event, Integer.valueOf(0) });
   }
 
-  public void clear() {
-    record.clear();
+  public static void clear() {
+    records.clear();
   }
 
-  public void saveRecord(String name) {
+  public static void saveRecord(String name) {
     Record record = new Record();
-    record.time = SystemClock.uptimeMillis();
-    record.name=name;
+    record.time = System.currentTimeMillis();
+    record.name = name;
+    record.activityName = getStartActivity();
     Long recordId = record.save();
-    for (RecordEvent recordEvent : this.record) {
+    for (RecordEvent recordEvent : records) {
       recordEvent.recordId = recordId;
       recordEvent.save();
     }
+  }
+
+  public static void installEvnet(List<RecordEvent> record) {
+    records = record;
+  }
+
+  public static void setStartActivityName(String startActivityName) {
+    if (startActivity == null) {
+      startActivity = startActivityName;
+    }
+  }
+
+  public static String getStartActivity() {
+    return startActivity;
   }
 
   private static class ReplayHandler extends Handler {

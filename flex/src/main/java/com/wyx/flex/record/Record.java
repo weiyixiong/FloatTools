@@ -1,5 +1,6 @@
 package com.wyx.flex.record;
 
+import android.app.Activity;
 import com.activeandroid.Model;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
@@ -12,11 +13,24 @@ import java.util.List;
  */
 @Table(name = "Record")
 public class Record extends Model {
+  @Column(name = "startActivity") String activityName;
   @Column(name = "name") String name;
   @Column(name = "time") long time;
 
   public Record() {
     super();
+  }
+
+  public String getActivityName() {
+    return activityName;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public long getTime() {
+    return time;
   }
 
   public static List<Record> getAllRecord() {

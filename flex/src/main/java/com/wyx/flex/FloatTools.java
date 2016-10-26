@@ -87,7 +87,6 @@ public class FloatTools {
   private int floatViewStatus = View.INVISIBLE;
   private int touchLayerStatus = STOPPED;
   private static FloatConfig config = new FloatConfig();
-  private static EventInput eventInput = new EventInput();
 
   private static int recordingStatus = STOPPED;
 
@@ -224,7 +223,7 @@ public class FloatTools {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
           currentActivity.get().dispatchTouchEvent(motionEvent);
-          eventInput.recordMotionEvent(motionEvent);
+          EventInput.recordMotionEvent(motionEvent);
           return false;
         }
       });
@@ -293,6 +292,9 @@ public class FloatTools {
   }
 
   private void completeInput() {
+    if (this.currentEditText == null) {
+      return;
+    }
     EditText view = this.currentEditText.get();
     completeInput(view);
   }
@@ -302,10 +304,10 @@ public class FloatTools {
     if (view.getId() == View.NO_ID) {
       Rect rect = new Rect();
       view.getGlobalVisibleRect(rect);
-      eventInput.recordEditEvent(rect.left + 1, rect.top + 1, view.getText().toString());
+      EventInput.recordEditEvent(rect.left + 1, rect.top + 1, view.getText().toString());
     } else {
       String viewId = this.currentActivity.get().getResources().getResourceName(view.getId());
-      eventInput.recordEditEvent(viewId, view.getText().toString());
+      EventInput.recordEditEvent(viewId, view.getText().toString());
     }
     startRecording();
   }
@@ -319,7 +321,7 @@ public class FloatTools {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
           currentActivity.get().dispatchTouchEvent(motionEvent);
-          eventInput.recordMotionEvent(motionEvent);
+          EventInput.recordMotionEvent(motionEvent);
           return false;
         }
       });
@@ -342,6 +344,7 @@ public class FloatTools {
         mWindowManager.addView(touchLayer, wmParams);
         showFloatTools();
         touchLayerStatus = RECORDING;
+        EventInput.setStartActivityName(activity.getClass().getName());
         Toast.makeText(this.currentActivity.get(), "started", Toast.LENGTH_SHORT).show();
         updateRecordBthText();
       }
@@ -354,38 +357,43 @@ public class FloatTools {
       touchLayerStatus = STOPPED;
       updateRecordBthText();
       Activity context = this.currentActivity.get();
-      WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
-      wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
-      wmParams.format = PixelFormat.RGBA_8888;
-      wmParams.gravity = Gravity.CENTER;
-      wmParams.x = 0;
-      wmParams.y = 0;
-      wmParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
-      LayoutInflater inflater = LayoutInflater.from(context);
-      final ViewGroup inputDialog = (ViewGroup) inflater.inflate(R.layout.dialog_name_input, null);
-      inputDialog.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-      Button cancel = (Button) inputDialog.findViewById(R.id.btn_cancel);
-      Button ok = (Button) inputDialog.findViewById(R.id.btn_ok);
-      final EditText recordName = (EditText) inputDialog.findViewById(R.id.text_record_name);
-
-      cancel.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          mWindowManager.removeView(inputDialog);
-        }
-      });
-      ok.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          eventInput.saveRecord(recordName.getText().toString());
-          mWindowManager.removeView(inputDialog);
-        }
-      });
-
-      mWindowManager.addView(inputDialog, wmParams);
       Toast.makeText(context, "stopped", Toast.LENGTH_SHORT).show();
     }
+  }
+
+  private Activity showInputDialog() {
+    Activity context = this.currentActivity.get();
+    WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
+    wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
+    wmParams.format = PixelFormat.RGBA_8888;
+    wmParams.gravity = Gravity.CENTER;
+    wmParams.x = 0;
+    wmParams.y = 0;
+    wmParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+    LayoutInflater inflater = LayoutInflater.from(context);
+    final ViewGroup inputDialog = (ViewGroup) inflater.inflate(R.layout.dialog_name_input, null);
+    inputDialog.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+    Button cancel = (Button) inputDialog.findViewById(R.id.btn_cancel);
+    Button ok = (Button) inputDialog.findViewById(R.id.btn_ok);
+    final EditText recordName = (EditText) inputDialog.findViewById(R.id.text_record_name);
+
+    cancel.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        mWindowManager.removeView(inputDialog);
+      }
+    });
+    ok.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        EventInput.saveRecord(recordName.getText().toString());
+        mWindowManager.removeView(inputDialog);
+      }
+    });
+
+    mWindowManager.addView(inputDialog, wmParams);
+    return context;
   }
 
   public void startInputing() {
@@ -470,6 +478,7 @@ public class FloatTools {
       public void onClick(View view) {
         if (touchLayerStatus == RECORDING) {
           stopRecording();
+          showInputDialog();
         } else if (touchLayerStatus == STOPPED) {
           startRecording();
         } else {
@@ -480,7 +489,7 @@ public class FloatTools {
     btnRecord.setOnLongClickListener(new View.OnLongClickListener() {
       @Override
       public boolean onLongClick(View v) {
-        eventInput.clear();
+        EventInput.clear();
         Toast.makeText(activity, "cleared", Toast.LENGTH_SHORT).show();
         return true;
       }
@@ -502,7 +511,22 @@ public class FloatTools {
     btnReplay.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        eventInput.replay();
+        String startActivity = EventInput.getStartActivity();
+        if (startActivity != null && !startActivity.isEmpty()) {
+          try {
+            Navgation.startActivity(activity, Class.forName(startActivity));
+          } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+          }
+        }
+        EventInput.replay();
+      }
+    });
+    btnReplay.setOnLongClickListener(new View.OnLongClickListener() {
+      @Override
+      public boolean onLongClick(View v) {
+        Navgation.startRecordActivity(activity);
+        return true;
       }
     });
     mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
@@ -537,7 +561,6 @@ public class FloatTools {
       }
     }
   }
-
 
   private static Runnable triggerEvent;
 
