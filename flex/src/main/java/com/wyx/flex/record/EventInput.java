@@ -1,5 +1,7 @@
 package com.wyx.flex.record;
 
+import android.app.Activity;
+import android.content.Context;
 import android.hardware.input.InputManager;
 import android.os.Handler;
 import android.os.Message;
@@ -10,6 +12,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import com.wyx.flex.FloatTools;
+import com.wyx.flex.util.Navgation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -71,13 +74,27 @@ public class EventInput {
     records.add(new RecordEvent(viewId, s, getCurrentTime()));
   }
 
-  public static void replay() {
+  public static void replay(Activity context,long delayTime) {
+    String startActivity = EventInput.getStartActivity();
+    if (startActivity != null && !startActivity.isEmpty()) {
+      try {
+        Navgation.startActivity(context, Class.forName(startActivity));
+      } catch (ClassNotFoundException e) {
+        e.printStackTrace();
+      }
+      EventInput.replay(2000+delayTime);
+    } else {
+      EventInput.replay(0+delayTime);
+    }
+  }
+
+  public static void replay(long delayTime) {
     handler = new ReplayHandler();
     long startTime = getCurrentTime();
     for (int i = 0; i < records.size(); i++) {
-      long timeDiff = 0;
+      long timeDiff = delayTime;
       if (i != 0) {
-        timeDiff = records.get(i).getTime() - records.get(0).getTime();
+        timeDiff = records.get(i).getTime() - records.get(0).getTime()+delayTime;
       }
       RecordEvent event = records.get(i);
       if (event.getType() == EventType.TOUCH) {
@@ -115,8 +132,9 @@ public class EventInput {
     }
   }
 
-  public static void installEvnet(List<RecordEvent> record) {
-    records = record;
+  public static void installRecord(Record record) {
+    records = RecordEvent.getAllRecordEventByID(record.getId());
+    startActivity = record.getActivityName();
   }
 
   public static void setStartActivityName(String startActivityName) {

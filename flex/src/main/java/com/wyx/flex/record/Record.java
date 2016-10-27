@@ -36,4 +36,8 @@ public class Record extends Model {
   public static List<Record> getAllRecord() {
     return new Select().all().from(Record.class).execute();
   }
+
+  public static Record getRecordById(long recordId) {
+    return new Select().from(Record.class).where("Id=?", recordId).executeSingle();
+  }
 }

@@ -34,6 +34,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.activeandroid.ActiveAndroid;
+import com.wyx.flex.record.Record;
 import com.wyx.flex.record.RecordEvent;
 import com.wyx.flex.util.AccessibilityUtil;
 import com.wyx.flex.record.EventInput;
@@ -41,7 +42,9 @@ import com.wyx.flex.util.FloatConfig;
 import com.wyx.flex.util.L;
 import com.wyx.flex.util.LogCatUtil;
 import com.wyx.flex.util.Navgation;
+import com.wyx.flex.util.PrefUtil;
 import com.wyx.flex.util.ShakeDetector;
+import com.wyx.flex.util.ShakeDetectorUtil;
 import com.wyx.flex.util.ViewUtil;
 import com.wyx.flex.view.BorderImageView;
 import com.wyx.flex.view.DragLayout;
@@ -81,21 +84,20 @@ public class FloatTools {
   private ScrollView logCatWrapper;
 
   private PointF touchDownPoint;
-  private static SensorManager mSensorManager;
-  private static Sensor mAccelerometer;
-  private ShakeDetector mShakeDetector;
+
   private int floatViewStatus = View.INVISIBLE;
   private int touchLayerStatus = STOPPED;
   private static FloatConfig config = new FloatConfig();
 
   private static int recordingStatus = STOPPED;
+  private static boolean startReplayed = false;
 
   public static void init(Application application) {
     ActiveAndroid.initialize(application);
+    PrefUtil.init(application);
+    ShakeDetectorUtil.init(application);
     FloatTools.application = application;
     instance = new FloatTools();
-    mSensorManager = (SensorManager) application.getSystemService(Context.SENSOR_SERVICE);
-    mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     application.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
       @Override
       public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
@@ -112,6 +114,12 @@ public class FloatTools {
         instance.setAndDumpActivity(activity);
         if (recordingStatus == RECORDING) {
           instance.installLayer(activity);
+        }
+        if (!startReplayed && PrefUtil.isPlayRecordOnLaunch()) {
+          startReplayed = true;
+          Record recordById = Record.getRecordById(PrefUtil.getCurrentPlayID());
+          EventInput.installRecord(recordById);
+          EventInput.replay(activity, 2000);
         }
       }
 
@@ -200,10 +208,7 @@ public class FloatTools {
     btnDebug.setOnClickListener(buildDebugClickListener(activity));
     btnReset.setOnClickListener(buildResetClickListener(activity));
 
-    // ShakeDetector initialization
-    mShakeDetector = new ShakeDetector();
-    mShakeDetector.setOnShakeListener(new ShakeDetector.OnShakeListener() {
-
+    ShakeDetectorUtil.registerListener(new ShakeDetector.OnShakeListener() {
       @Override
       public void onShake(int count) {
         showFloatTools();
@@ -212,7 +217,6 @@ public class FloatTools {
     if (config.isStartOnLaunch()) {
       showFloatTools();
     }
-    mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
   }
 
   private void installLayer(final Activity activity) {
@@ -511,15 +515,7 @@ public class FloatTools {
     btnReplay.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        String startActivity = EventInput.getStartActivity();
-        if (startActivity != null && !startActivity.isEmpty()) {
-          try {
-            Navgation.startActivity(activity, Class.forName(startActivity));
-          } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-          }
-        }
-        EventInput.replay();
+        EventInput.replay(activity, 0);
       }
     });
     btnReplay.setOnLongClickListener(new View.OnLongClickListener() {

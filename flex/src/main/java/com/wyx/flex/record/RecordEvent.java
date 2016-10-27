@@ -4,6 +4,7 @@ import android.view.MotionEvent;
 import com.activeandroid.Model;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
+import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
 import java.util.List;
 
@@ -32,6 +33,10 @@ public class RecordEvent extends Model {
 
   public static List<RecordEvent> getAllRecordEventByID(long recordId) {
     return new Select().all().from(RecordEvent.class).where("recordId =?", recordId).orderBy("time ASC").execute();
+  }
+
+  public static List<RecordEvent> deleteAllRecordEventByID(long recordId) {
+    return new Delete().from(RecordEvent.class).where("recordId =?", recordId).execute();
   }
 
   public RecordEvent(String text, float x, float y, long time) {
