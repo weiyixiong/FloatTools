@@ -1,10 +1,9 @@
 package com.wyx.flex.record;
 
-import android.app.Activity;
-import com.activeandroid.Model;
-import com.activeandroid.annotation.Column;
-import com.activeandroid.annotation.Table;
-import com.activeandroid.query.Select;
+import com.activeandroidlib.Model;
+import com.activeandroidlib.annotation.Column;
+import com.activeandroidlib.annotation.Table;
+import com.activeandroidlib.query.Select;
 import java.util.List;
 
 /**
