@@ -34,6 +34,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.activeandroid.ActiveAndroid;
+import com.activeandroid.Configuration;
 import com.wyx.flex.record.Record;
 import com.wyx.flex.record.RecordEvent;
 import com.wyx.flex.util.AccessibilityUtil;
@@ -93,7 +94,11 @@ public class FloatTools {
   private static boolean startReplayed = false;
 
   public static void init(Application application) {
-    ActiveAndroid.initialize(application);
+    Configuration dbConfiguration = new Configuration.Builder(application).setDatabaseName("Record.db")
+                                                                          .setModelClasses(Record.class,
+                                                                                           RecordEvent.class)
+                                                                          .create();
+    ActiveAndroid.initialize(dbConfiguration);
     PrefUtil.init(application);
     ShakeDetectorUtil.init(application);
     FloatTools.application = application;
