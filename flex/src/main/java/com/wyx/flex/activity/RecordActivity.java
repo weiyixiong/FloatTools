@@ -98,6 +98,13 @@ public class RecordActivity extends Activity {
           });
         } else {
           viewHolder.btnInstall.setText("正在使用");
+          viewHolder.btnInstall.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+              PrefUtil.setCurrentRecordId(-1);
+              updateList();
+            }
+          });
         }
       } else {
         viewHolder.btnInstall.setText("装载");
@@ -121,6 +128,7 @@ public class RecordActivity extends Activity {
 
               public void onClick(DialogInterface dialog, int which) {
                 PrefUtil.setPlayRecordOnLaunch(false, item.getId());
+                updateList();
                 dialog.dismiss();
               }
             });

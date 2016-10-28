@@ -48,6 +48,7 @@ import com.wyx.flex.util.ViewUtil;
 import com.wyx.flex.view.BorderImageView;
 import com.wyx.flex.view.DragLayout;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -91,6 +92,12 @@ public class FloatTools {
   private static int recordingStatus = STOPPED;
   private static boolean startReplayed = false;
 
+  private static OnActivityResumedListener onActivityResumedListener;
+
+  public interface OnActivityResumedListener {
+    void OnActivityResumed();
+  }
+
   public static void init(Application application) {
     Configuration dbConfiguration = new Configuration.Builder(application).setDatabaseName("Record.db")
                                                                           .setModelClasses(Record.class,
@@ -118,11 +125,15 @@ public class FloatTools {
         if (recordingStatus == RECORDING) {
           instance.installLayer(activity);
         }
+        Record recordById = Record.getRecordById(PrefUtil.getCurrentPlayID());
+        EventInput.installRecord(recordById);
         if (!startReplayed && PrefUtil.isPlayRecordOnLaunch()) {
           startReplayed = true;
-          Record recordById = Record.getRecordById(PrefUtil.getCurrentPlayID());
-          EventInput.installRecord(recordById);
-          EventInput.replay(activity, 2000);
+          EventInput.replay(activity);
+        }
+        if (onActivityResumedListener != null) {
+          onActivityResumedListener.OnActivityResumed();
+          onActivityResumedListener = null;
         }
       }
 
@@ -183,9 +194,10 @@ public class FloatTools {
     if (activity == null) {
       return;
     }
-    if (mFloatLayout == null) {
-      initFloatView(activity);
+    if (mFloatLayout != null) {
+      return;
     }
+    initFloatView(activity);
     dragArea.setOnTouchListener(new View.OnTouchListener() {
       @Override
       public boolean onTouch(View v, MotionEvent event) {
@@ -208,8 +220,8 @@ public class FloatTools {
         return false;
       }
     });
-    btnDebug.setOnClickListener(buildDebugClickListener(activity));
-    btnReset.setOnClickListener(buildResetClickListener(activity));
+    btnDebug.setOnClickListener(buildDebugClickListener());
+    btnReset.setOnClickListener(buildResetClickListener());
 
     ShakeDetectorUtil.registerListener(new ShakeDetector.OnShakeListener() {
       @Override
@@ -403,7 +415,7 @@ public class FloatTools {
     return context;
   }
 
-  public void startInputing() {
+  public void startInputting() {
     if (touchLayerStatus == RECORDING) {
       stopRecording();
       setEditorListener();
@@ -518,7 +530,7 @@ public class FloatTools {
     btnReplay.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        EventInput.replay(activity, 0);
+        EventInput.replay(activity);
       }
     });
     btnReplay.setOnLongClickListener(new View.OnLongClickListener() {
@@ -563,6 +575,10 @@ public class FloatTools {
 
   private static Runnable triggerEvent;
 
+  public static void setOnActivityResumedListener(OnActivityResumedListener onActivityResumedListener) {
+    FloatTools.onActivityResumedListener = onActivityResumedListener;
+  }
+
   public static void setTriggerEvent(Runnable runnable) {
     triggerEvent = runnable;
   }
@@ -582,10 +598,11 @@ public class FloatTools {
   }
 
   @NonNull
-  private View.OnClickListener buildResetClickListener(final Activity activity) {
+  private View.OnClickListener buildResetClickListener() {
     return new View.OnClickListener() {
       @Override
       public void onClick(View v) {
+        Activity activity = getCurrentActivity();
         Intent intent = new Intent();
         intent.setAction(RESET);
         application.sendBroadcast(intent);
@@ -604,11 +621,16 @@ public class FloatTools {
     };
   }
 
+  public Activity getCurrentActivity() {
+    return this.currentActivity.get();
+  }
+
   @NonNull
-  private View.OnClickListener buildDebugClickListener(final Activity activity) {
+  private View.OnClickListener buildDebugClickListener() {
     return new View.OnClickListener() {
       @Override
       public void onClick(final View v) {
+        Activity activity = getCurrentActivity();
         ViewUtil.dumpView(activity);
         ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
         List<View> allChildViews = ViewUtil.getAllChildViews(activity);

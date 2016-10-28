@@ -74,17 +74,22 @@ public class EventInput {
     records.add(new RecordEvent(viewId, s, getCurrentTime()));
   }
 
-  public static void replay(Activity context,long delayTime) {
+  public static void replay(Activity context) {
     String startActivity = EventInput.getStartActivity();
-    if (startActivity != null && !startActivity.isEmpty()) {
+    if (startActivity != null && !startActivity.isEmpty() && !context.getClass().getName().equals(startActivity)) {
+      FloatTools.setOnActivityResumedListener(new FloatTools.OnActivityResumedListener() {
+        @Override
+        public void OnActivityResumed() {
+          EventInput.replay(0);
+        }
+      });
       try {
         Navgation.startActivity(context, Class.forName(startActivity));
       } catch (ClassNotFoundException e) {
         e.printStackTrace();
       }
-      EventInput.replay(2000+delayTime);
     } else {
-      EventInput.replay(0+delayTime);
+      EventInput.replay(0);
     }
   }
 
@@ -94,7 +99,7 @@ public class EventInput {
     for (int i = 0; i < records.size(); i++) {
       long timeDiff = delayTime;
       if (i != 0) {
-        timeDiff = records.get(i).getTime() - records.get(0).getTime()+delayTime;
+        timeDiff = records.get(i).getTime() - records.get(0).getTime() + delayTime;
       }
       RecordEvent event = records.get(i);
       if (event.getType() == EventType.TOUCH) {

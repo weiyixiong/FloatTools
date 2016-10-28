@@ -27,6 +27,13 @@ public class PrefUtil {
     editor.apply();
   }
 
+  public static void setCurrentRecordId(long recordID) {
+    SharedPreferences preference = getSharedPreferences();
+    SharedPreferences.Editor editor = preference.edit();
+    editor.putLong(CURRENT_RECORD_ID, recordID);
+    editor.apply();
+  }
+
   public static long getCurrentPlayID() {
     return getSharedPreferences().getLong(CURRENT_RECORD_ID, -1);
   }
