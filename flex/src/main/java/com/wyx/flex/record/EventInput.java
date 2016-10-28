@@ -138,6 +138,9 @@ public class EventInput {
   }
 
   public static void installRecord(Record record) {
+    if (record == null) {
+      return;
+    }
     records = RecordEvent.getAllRecordEventByID(record.getId());
     startActivity = record.getActivityName();
   }
