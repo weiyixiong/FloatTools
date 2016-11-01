@@ -80,7 +80,7 @@ public class EventInput {
       FloatTools.setOnActivityResumedListener(new FloatTools.OnActivityResumedListener() {
         @Override
         public void OnActivityResumed() {
-          EventInput.replay(0);
+          EventInput.replay(2000);
         }
       });
       try {
@@ -146,9 +146,7 @@ public class EventInput {
   }
 
   public static void setStartActivityName(String startActivityName) {
-    if (startActivity == null) {
-      startActivity = startActivityName;
-    }
+    startActivity = startActivityName;
   }
 
   public static String getStartActivity() {
