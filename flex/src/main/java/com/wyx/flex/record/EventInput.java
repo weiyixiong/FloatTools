@@ -89,7 +89,7 @@ public class EventInput {
         e.printStackTrace();
       }
     } else {
-      EventInput.replay(0);
+      EventInput.replay(2000);
     }
   }
 
