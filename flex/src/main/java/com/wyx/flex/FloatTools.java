@@ -481,7 +481,7 @@ public class FloatTools {
     logInfo.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        Navgation.startLogCatActivity(activity);
+        Navgation.startLogCatActivity(getCurrentActivity());
       }
     });
 
@@ -531,13 +531,13 @@ public class FloatTools {
     btnReplay.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        EventInput.replay(activity);
+        EventInput.replay(getCurrentActivity());
       }
     });
     btnReplay.setOnLongClickListener(new View.OnLongClickListener() {
       @Override
       public boolean onLongClick(View v) {
-        Navgation.startRecordActivity(activity);
+        Navgation.startRecordActivity(getCurrentActivity());
         return true;
       }
     });
