@@ -146,7 +146,7 @@ public class EventInput {
   }
 
   public static void setStartActivityName(String startActivityName) {
-    startActivity = startActivityName;
+    if (startActivity == null) startActivity = startActivityName;
   }
 
   public static String getStartActivity() {
