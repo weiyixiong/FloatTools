@@ -349,6 +349,7 @@ public class FloatTools {
       AccessibilityUtil.openSetting(activity);
     } else {
       if (touchLayerStatus == STOPPED || touchLayerStatus == INPUTTING) {
+        //make floatTools on the touchLayer
         hideFloatTools();
         WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
         wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
@@ -545,7 +546,9 @@ public class FloatTools {
   }
 
   private void hideFloatTools() {
-    mWindowManager.removeView(mFloatLayout);
+    if (mFloatLayout.getParent() != null) {
+      mWindowManager.removeView(mFloatLayout);
+    }
     floatViewStatus = View.INVISIBLE;
   }
 
