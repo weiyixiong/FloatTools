@@ -67,6 +67,58 @@ public class RecordActivity extends Activity {
     public long getItemId(int position) {
       return 0;
     }
+    View.OnClickListener cancelAutoRun = new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Record item = (Record) v.getTag();
+        PrefUtil.setPlayRecordOnLaunch(false, item.getId());
+        updateList();
+      }
+    };
+    View.OnClickListener cancelUse = new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        PrefUtil.setCurrentRecordId(-1);
+        updateList();
+      }
+    };
+    View.OnClickListener installOnClickListener = new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        final Record item = (Record) v.getTag();
+        EventInput.installRecord(item);
+        AlertDialog.Builder builder = new AlertDialog.Builder(RecordActivity.this);
+        builder.setMessage("是否在应用启动时自动运行？");
+        builder.setTitle("提示");
+        builder.setPositiveButton("是", new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            PrefUtil.setPlayRecordOnLaunch(true, item.getId());
+            updateList();
+            dialog.dismiss();
+          }
+        });
+        builder.setNegativeButton("否", new DialogInterface.OnClickListener() {
+          @Override
+
+          public void onClick(DialogInterface dialog, int which) {
+            PrefUtil.setPlayRecordOnLaunch(false, item.getId());
+            updateList();
+            dialog.dismiss();
+          }
+        });
+        builder.create().show();
+      }
+    };
+    View.OnClickListener deleteOnClick = new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Record item = (Record) v.getTag();
+        RecordEvent.deleteAllRecordEventByID(item.getId());
+        item.delete();
+        updateList();
+      }
+    };
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
@@ -82,69 +134,24 @@ public class RecordActivity extends Activity {
       } else {
         viewHolder = (ViewHolder) convertView.getTag();
       }
-      final Record item = getItem(position);
+      Record item = getItem(position);
       viewHolder.name.setText(item.getName());
       viewHolder.time.setText(TimeUtils.getDate(item.getTime()));
       viewHolder.startActivity.setText(item.getActivityName());
+      viewHolder.btnInstall.setTag(item);
       if (currentRecordId == item.getId()) {
         if (PrefUtil.isPlayRecordOnLaunch()) {
           viewHolder.btnInstall.setText("取消自启");
-          viewHolder.btnInstall.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-              PrefUtil.setPlayRecordOnLaunch(false, item.getId());
-              updateList();
-            }
-          });
+          viewHolder.btnInstall.setOnClickListener(cancelAutoRun);
         } else {
           viewHolder.btnInstall.setText("正在使用");
-          viewHolder.btnInstall.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-              PrefUtil.setCurrentRecordId(-1);
-              updateList();
-            }
-          });
+          viewHolder.btnInstall.setOnClickListener(cancelUse);
         }
       } else {
         viewHolder.btnInstall.setText("装载");
-        viewHolder.btnInstall.setOnClickListener(new View.OnClickListener() {
-          @Override
-          public void onClick(View v) {
-            EventInput.installRecord(getItem(position));
-            AlertDialog.Builder builder = new AlertDialog.Builder(RecordActivity.this);
-            builder.setMessage("是否在应用启动时自动运行？");
-            builder.setTitle("提示");
-            builder.setPositiveButton("是", new DialogInterface.OnClickListener() {
-              @Override
-              public void onClick(DialogInterface dialog, int which) {
-                PrefUtil.setPlayRecordOnLaunch(true, item.getId());
-                updateList();
-                dialog.dismiss();
-              }
-            });
-            builder.setNegativeButton("否", new DialogInterface.OnClickListener() {
-              @Override
-
-              public void onClick(DialogInterface dialog, int which) {
-                PrefUtil.setPlayRecordOnLaunch(false, item.getId());
-                updateList();
-                dialog.dismiss();
-              }
-            });
-            builder.create().show();
-          }
-        });
+        viewHolder.btnInstall.setOnClickListener(installOnClickListener);
       }
-
-      viewHolder.btnDelete.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          RecordEvent.deleteAllRecordEventByID(getItem(position).getId());
-          getItem(position).delete();
-          updateList();
-        }
-      });
+      viewHolder.btnDelete.setOnClickListener(deleteOnClick);
       return convertView;
     }
 
