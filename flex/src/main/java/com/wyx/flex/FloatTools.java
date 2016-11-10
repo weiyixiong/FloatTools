@@ -11,6 +11,7 @@ import android.graphics.PixelFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -48,7 +49,6 @@ import com.wyx.flex.util.ViewUtil;
 import com.wyx.flex.view.BorderImageView;
 import com.wyx.flex.view.DragLayout;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -82,6 +82,7 @@ public class FloatTools {
   private ImageView dragArea;
   private TextView logInfo;
   private ScrollView logCatWrapper;
+  private static Handler autoRunControlHandler;
 
   private PointF touchDownPoint;
 
@@ -103,6 +104,7 @@ public class FloatTools {
                                                                           .setModelClasses(Record.class,
                                                                                            RecordEvent.class)
                                                                           .create();
+    autoRunControlHandler = new Handler();
     ActiveAndroid.initialize(dbConfiguration);
     PrefUtil.init(application);
     ShakeDetectorUtil.init(application);
@@ -128,8 +130,13 @@ public class FloatTools {
         Record recordById = Record.getRecordById(PrefUtil.getCurrentPlayID());
         EventInput.installRecord(recordById);
         if (!startReplayed && PrefUtil.isPlayRecordOnLaunch()) {
-          startReplayed = true;
-          EventInput.replay(activity);
+          autoRunControlHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+              startReplayed = true;
+              EventInput.replay(instance.getCurrentActivity());
+            }
+          }, 3000);
         }
         if (onActivityResumedListener != null) {
           onActivityResumedListener.OnActivityResumed();
@@ -145,6 +152,9 @@ public class FloatTools {
           instance.stopRecording();
         } else {
           recordingStatus = STOPPED;
+        }
+        if (autoRunControlHandler.hasMessages(0)) {
+          autoRunControlHandler.removeCallbacksAndMessages(0);
         }
       }
 
