@@ -7,7 +7,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -30,13 +30,13 @@ public class ViewParser {
 
   private static final byte SIG_MAP = 'M'; //77 a map with an short key
   private static final short SIG_END_MAP = 0;
-  private static Map<Short, String> mKeyValue = new HashMap<>(200);
+  private static Map<Short, String> mKeyValue = new LinkedHashMap<>(200);
   private static DataInputStream mStream;
   private static Charset mCharset = Charset.forName("utf-8");
 
   private static Stack<Map<Short, String>> stack = new Stack<>();
   private static List<Map<Short, String>> result = new ArrayList<>();
-  private static Map<String, Map<String, String>> mergeResult = new HashMap<>();
+  private static Map<String, Map<String, String>> mergeResult = new LinkedHashMap<>();
 
   private static ViewDataNode root;
   private static ViewDataNode currentNode;
@@ -50,7 +50,7 @@ public class ViewParser {
     mKeyValue = result.get(result.size() - 1);
     result.remove(result.size() - 1);
     for (Map<Short, String> shortStringMap : result) {
-      Map<String, String> tmp = new HashMap<>();
+      Map<String, String> tmp = new LinkedHashMap<>();
       for (Map.Entry<Short, String> shortStringEntry : shortStringMap.entrySet()) {
         tmp.put(mKeyValue.get(shortStringEntry.getKey()), shortStringEntry.getValue());
       }
@@ -62,7 +62,7 @@ public class ViewParser {
 
   private static void mergeViewData(Map<Short, String> mKeyValue, ViewDataNode root) {
     if (root.getOriginData() != null) {
-      Map<String, String> tmp = new HashMap<>();
+      Map<String, String> tmp = new LinkedHashMap<>();
       for (Map.Entry<Short, String> shortStringEntry : root.getOriginData().entrySet()) {
         if (!mKeyValue.containsKey(shortStringEntry.getKey())) {
           L.e(shortStringEntry.getValue());
@@ -104,7 +104,7 @@ public class ViewParser {
           if (!stack.isEmpty()) {
             mKeyValue = stack.pop();
           } else {
-            mKeyValue = new HashMap<>();//null;
+            mKeyValue = new LinkedHashMap<>();//null;
           }
           continue;
         }
@@ -116,7 +116,7 @@ public class ViewParser {
         currentNode.addChild(viewDataNode);
         currentNode = viewDataNode;
 
-        mKeyValue = new HashMap<>();
+        mKeyValue = new LinkedHashMap<>();
         continue;
       }
 
@@ -170,7 +170,7 @@ public class ViewParser {
         case SIG_MAP:
           L.e("start-------------------------->");
           stack.push(mKeyValue);
-          mKeyValue = new HashMap<>();
+          mKeyValue = new LinkedHashMap<>();
           ViewDataNode viewDataNode = new ViewDataNode(currentNode);
           currentNode.addChild(viewDataNode);
           currentNode = viewDataNode;
@@ -192,7 +192,7 @@ public class ViewParser {
   }
 
   public static Map<String, List<Pair<String, String>>> getViewInfo(String hashcode) {
-    Map<String, List<Pair<String, String>>> res = new HashMap();
+    Map<String, List<Pair<String, String>>> res = new LinkedHashMap();
 
     ViewDataNode node = findNode(hashcode, root);
     Map<String, String> stringStringMap = node.getData();

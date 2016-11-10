@@ -17,6 +17,8 @@ import android.widget.Toast;
 import com.wyx.flex.FloatTools;
 import com.wyx.flex.R;
 import com.wyx.flex.parser.ViewParser;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -69,9 +71,8 @@ public class DetailInfoActivity extends Activity {
     hashCode = getIntent().getIntExtra(VIEW_HASH_CODE, 0);
     Map<String, List<Pair<String, String>>> viewInfo = ViewParser.getViewInfo(hashCode);
     if (viewInfo == null) {
-      Toast.makeText(getApplicationContext(), "无信息", Toast.LENGTH_SHORT).show();
+      Toast.makeText(getApplicationContext(), "获取信息失败", Toast.LENGTH_SHORT).show();
     }
-
     String[] index = new String[viewInfo.size()];
     Iterator<Map.Entry<String, List<Pair<String, String>>>> iterator = viewInfo.entrySet().iterator();
     int i = 0;
