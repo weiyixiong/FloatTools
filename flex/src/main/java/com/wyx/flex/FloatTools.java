@@ -189,10 +189,6 @@ public class FloatTools {
   }
 
   public void showFloatTools() {
-    final Activity activity = this.currentActivity.get();
-    if (activity == null) {
-      throw new RuntimeException("have not setup activity or activity had recycled");
-    }
     if (floatViewStatus == View.INVISIBLE) {
       mWindowManager.addView(mFloatLayout, wmParams);
       floatViewStatus = View.VISIBLE;
@@ -200,39 +196,11 @@ public class FloatTools {
   }
 
   private void createFloatView() {
-    final Activity activity = this.currentActivity.get();
-    if (activity == null) {
-      return;
-    }
-    if (mFloatLayout != null) {
+    Activity activity = this.currentActivity.get();
+    if (activity == null || mFloatLayout != null) {
       return;
     }
     initFloatView(activity);
-    dragArea.setOnTouchListener(new View.OnTouchListener() {
-      @Override
-      public boolean onTouch(View v, MotionEvent event) {
-        if (touchDownPoint == null) {
-          touchDownPoint = new PointF();
-        }
-        float x = event.getRawX();
-        float y = event.getRawY();
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-          touchDownPoint.set(x, y);
-        } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-          wmParams = (WindowManager.LayoutParams) mFloatLayout.getLayoutParams();
-          wmParams.x += (x - touchDownPoint.x);
-          wmParams.y += (y - touchDownPoint.y);
-          mWindowManager.updateViewLayout(mFloatLayout, wmParams);
-
-          L.e(wmParams.x + "  " + x + " " + touchDownPoint.x);
-          touchDownPoint.set(x, y);
-        }
-        return false;
-      }
-    });
-    btnDebug.setOnClickListener(buildDebugClickListener());
-    btnReset.setOnClickListener(buildResetClickListener());
-
     ShakeDetectorUtil.registerListener(new ShakeDetector.OnShakeListener() {
       @Override
       public void onShake(int count) {
@@ -263,39 +231,49 @@ public class FloatTools {
     for (View allChildView : allChildViews) {
       if (allChildView instanceof EditText) {
         final EditText editText = (EditText) allChildView;
-        editText.addTextChangedListener(new TextWatcher() {
-          @Override
-          public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-          }
-
-          @Override
-          public void onTextChanged(CharSequence s, int start, int before, int count) {
-            if (touchLayerStatus == STOPPED) {
-              return;
-            }
-            if (currentEditText == null || currentEditText.get() != editText) {
-              currentEditText = new WeakReference<>(editText);
-            }
-          }
-
-          @Override
-          public void afterTextChanged(Editable s) {
-
-          }
-        });
-        editText.setOnEditorActionListener(new EditText.OnEditorActionListener() {
-          public boolean onEditorAction(TextView view, int action, KeyEvent event) {
-            if (isSoftKeyboardFinishedAction(view, action, event)) {
-              completeInput(view);
-            }
-            return false;
-          }
-        });
+        editText.addTextChangedListener(getWatcher(editText));
+        editText.setOnEditorActionListener(getEditorActionListener());
       }
     }
     touchLayerStatus = INPUTTING;
     updateRecordBthText();
+  }
+
+  @NonNull
+  private EditText.OnEditorActionListener getEditorActionListener() {
+    return new EditText.OnEditorActionListener() {
+      public boolean onEditorAction(TextView view, int action, KeyEvent event) {
+        if (isSoftKeyboardFinishedAction(view, action, event)) {
+          completeInput(view);
+        }
+        return false;
+      }
+    };
+  }
+
+  @NonNull
+  private TextWatcher getWatcher(final EditText editText) {
+    return new TextWatcher() {
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+      }
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+        if (touchLayerStatus == STOPPED) {
+          return;
+        }
+        if (currentEditText == null || currentEditText.get() != editText) {
+          currentEditText = new WeakReference<>(editText);
+        }
+      }
+
+      @Override
+      public void afterTextChanged(Editable s) {
+
+      }
+    };
   }
 
   private void updateRecordBthText() {
@@ -323,14 +301,14 @@ public class FloatTools {
       view.getGlobalVisibleRect(rect);
       EventInput.recordEditEvent(rect.left + 1, rect.top + 1, view.getText().toString());
     } else {
-      String viewId = this.currentActivity.get().getResources().getResourceName(view.getId());
+      String viewId = getCurrentActivity().getResources().getResourceName(view.getId());
       EventInput.recordEditEvent(viewId, view.getText().toString());
     }
     startRecording();
   }
 
   public void startRecording() {
-    Activity activity = this.currentActivity.get();
+    Activity activity = getCurrentActivity();
     if (touchLayer == null) {
       touchLayer = new FrameLayout(activity.getApplicationContext());
       touchLayer.setBackgroundColor(Color.TRANSPARENT);
@@ -447,17 +425,156 @@ public class FloatTools {
 
     LayoutInflater inflater = LayoutInflater.from(activity.getApplication());
     mFloatLayout = (RelativeLayout) inflater.inflate(R.layout.float_tool_bar, null);
-    btnDebug = (Button) mFloatLayout.findViewById(R.id.button);
-    btnReset = (Button) mFloatLayout.findViewById(R.id.reset);
-    btnHide = (Button) mFloatLayout.findViewById(R.id.hide);
-    btnLogcat = (Button) mFloatLayout.findViewById(R.id.logcat);
-    btnTrigger = (Button) mFloatLayout.findViewById(R.id.trigger_event);
-    btnRecord = (Button) mFloatLayout.findViewById(R.id.install_layer);
-    btnReplay = (Button) mFloatLayout.findViewById(R.id.replay);
+    btnDebug = (Button) mFloatLayout.findViewById(R.id.btn_debug);
+    btnReset = (Button) mFloatLayout.findViewById(R.id.btn_reset);
+    btnHide = (Button) mFloatLayout.findViewById(R.id.btn_hide);
+    btnLogcat = (Button) mFloatLayout.findViewById(R.id.btn_logcat);
+    btnTrigger = (Button) mFloatLayout.findViewById(R.id.btn_trigger_event);
+    btnRecord = (Button) mFloatLayout.findViewById(R.id.btn_record);
+    btnReplay = (Button) mFloatLayout.findViewById(R.id.btn_replay);
     dragArea = (ImageView) mFloatLayout.findViewById(R.id.drag_area);
     logInfo = (TextView) mFloatLayout.findViewById(R.id.tv_loginfo);
-    logCatWrapper = (ScrollView) mFloatLayout.findViewById(R.id.tv_loginfo_wrapper);
+    logCatWrapper = (ScrollView) mFloatLayout.findViewById(R.id.layout_loginfo_wrapper);
 
+    initWithConfig();
+
+    btnLogcat.setOnClickListener(floatButtonsOnClickListener);
+    logInfo.setOnClickListener(floatButtonsOnClickListener);
+    btnHide.setOnClickListener(floatButtonsOnClickListener);
+    btnRecord.setOnClickListener(floatButtonsOnClickListener);
+    btnDebug.setOnClickListener(floatButtonsOnClickListener);
+    btnReset.setOnClickListener(floatButtonsOnClickListener);
+    btnRecord.setOnLongClickListener(new View.OnLongClickListener() {
+      @Override
+      public boolean onLongClick(View v) {
+        EventInput.clear();
+        Toast.makeText(activity, "cleared", Toast.LENGTH_SHORT).show();
+        return true;
+      }
+    });
+    btnReplay.setOnLongClickListener(new View.OnLongClickListener() {
+      @Override
+      public boolean onLongClick(View v) {
+        Navgation.startRecordActivity(getCurrentActivity());
+        return true;
+      }
+    });
+    dragArea.setOnTouchListener(new View.OnTouchListener() {
+      @Override
+      public boolean onTouch(View v, MotionEvent event) {
+        if (touchDownPoint == null) {
+          touchDownPoint = new PointF();
+        }
+        float x = event.getRawX();
+        float y = event.getRawY();
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+          touchDownPoint.set(x, y);
+        } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+          wmParams = (WindowManager.LayoutParams) mFloatLayout.getLayoutParams();
+          wmParams.x += (x - touchDownPoint.x);
+          wmParams.y += (y - touchDownPoint.y);
+          mWindowManager.updateViewLayout(mFloatLayout, wmParams);
+
+          L.e(wmParams.x + "  " + x + " " + touchDownPoint.x);
+          touchDownPoint.set(x, y);
+        }
+        return false;
+      }
+    });
+    mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+  }
+
+  private View.OnClickListener floatButtonsOnClickListener = new View.OnClickListener() {
+    @Override
+    public void onClick(View v) {
+      int viewId = v.getId();
+      if (viewId == R.id.btn_logcat) {
+        onClickLogCat();
+      } else if (viewId == R.id.tv_loginfo) {
+        onClickLogInfo();
+      } else if (viewId == R.id.btn_hide) {
+        onClickHide();
+      } else if (viewId == R.id.btn_record) {
+        onClickRecord();
+      } else if (viewId == R.id.btn_replay) {
+        onClickReplay();
+      } else if (viewId == R.id.btn_debug) {
+        onCLickDebug();
+      } else if (viewId == R.id.btn_reset) {
+        onClickReset();
+      }
+    }
+
+    private void onCLickDebug() {
+      Activity activity = getCurrentActivity();
+      ViewUtil.dumpView(activity);
+      ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
+      DragLayout parent = (DragLayout) root.findViewWithTag(TAG);
+      if (parent == null) {
+        parent = new DragLayout(activity);
+        parent.setTag(TAG);
+      }
+      parent.removeAllViews();
+      root.removeView(parent);
+      parent.setBackgroundColor(Color.WHITE);
+      parent.removeAllViews();
+      addFakeView(activity, parent, root, 0, 0);
+      root.addView(parent);
+    }
+
+    private void onClickReset() {
+      Activity activity = getCurrentActivity();
+      Intent intent = new Intent();
+      intent.setAction(RESET);
+      application.sendBroadcast(intent);
+
+      ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
+      if (root.findViewWithTag(TAG) == null) {
+        FrameLayout parent = new FrameLayout(activity);
+        parent.setTag(TAG);
+        root.addView(parent);
+      }
+      FrameLayout parent = (FrameLayout) root.findViewWithTag(TAG);
+      parent.setBackgroundColor(Color.WHITE);
+      parent.removeAllViews();
+      root.removeView(parent);
+    }
+
+    private void onClickReplay() {
+      EventInput.replay(getCurrentActivity());
+    }
+
+    private void onClickRecord() {
+      if (touchLayerStatus == RECORDING) {
+        stopRecording();
+        showInputDialog();
+      } else if (touchLayerStatus == STOPPED) {
+        startRecording();
+      } else {
+        completeInput();
+      }
+    }
+
+    private void onClickHide() {
+      hideFloatTools();
+      btnReset.performClick();
+    }
+
+    private void onClickLogInfo() {
+      Navgation.startLogCatActivity(getCurrentActivity());
+    }
+
+    private void onClickLogCat() {
+      if (logInfo.isShown()) {
+        logCatWrapper.setVisibility(View.GONE);
+      } else {
+        logCatWrapper.setVisibility(View.VISIBLE);
+      }
+    }
+  };
+
+  private void initWithConfig() {
     if (config.isLogCatEnabled()) {
       btnLogcat.setVisibility(View.VISIBLE);
       startLogCat();
@@ -469,53 +586,6 @@ public class FloatTools {
     } else {
       logCatWrapper.setVisibility(View.VISIBLE);
     }
-
-    btnLogcat.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        if (logInfo.isShown()) {
-          logCatWrapper.setVisibility(View.GONE);
-        } else {
-          logCatWrapper.setVisibility(View.VISIBLE);
-        }
-      }
-    });
-    logInfo.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        Navgation.startLogCatActivity(getCurrentActivity());
-      }
-    });
-
-    btnHide.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        hideFloatTools();
-        btnReset.performClick();
-      }
-    });
-
-    btnRecord.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View view) {
-        if (touchLayerStatus == RECORDING) {
-          stopRecording();
-          showInputDialog();
-        } else if (touchLayerStatus == STOPPED) {
-          startRecording();
-        } else {
-          completeInput();
-        }
-      }
-    });
-    btnRecord.setOnLongClickListener(new View.OnLongClickListener() {
-      @Override
-      public boolean onLongClick(View v) {
-        EventInput.clear();
-        Toast.makeText(activity, "cleared", Toast.LENGTH_SHORT).show();
-        return true;
-      }
-    });
     if (config.isTriggerEnabled()) {
       btnTrigger.setVisibility(View.VISIBLE);
       btnTrigger.setOnClickListener(new View.OnClickListener() {
@@ -529,22 +599,6 @@ public class FloatTools {
     } else {
       btnTrigger.setVisibility(View.GONE);
     }
-
-    btnReplay.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        EventInput.replay(getCurrentActivity());
-      }
-    });
-    btnReplay.setOnLongClickListener(new View.OnLongClickListener() {
-      @Override
-      public boolean onLongClick(View v) {
-        Navgation.startRecordActivity(getCurrentActivity());
-        return true;
-      }
-    });
-    mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
   }
 
   private void hideFloatTools() {
@@ -555,7 +609,7 @@ public class FloatTools {
   }
 
   public void onTouch(MotionEvent event) {
-    this.currentActivity.get().dispatchTouchEvent(event);
+    getCurrentActivity().dispatchTouchEvent(event);
   }
 
   public void onEdit(RecordEvent event) {
@@ -602,59 +656,12 @@ public class FloatTools {
     });
   }
 
-  @NonNull
-  private View.OnClickListener buildResetClickListener() {
-    return new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        Activity activity = getCurrentActivity();
-        Intent intent = new Intent();
-        intent.setAction(RESET);
-        application.sendBroadcast(intent);
-
-        ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
-        if (root.findViewWithTag(TAG) == null) {
-          FrameLayout parent = new FrameLayout(activity);
-          parent.setTag(TAG);
-          root.addView(parent);
-        }
-        FrameLayout parent = (FrameLayout) root.findViewWithTag(TAG);
-        parent.setBackgroundColor(Color.WHITE);
-        parent.removeAllViews();
-        root.removeView(parent);
-      }
-    };
-  }
-
   public Activity getCurrentActivity() {
-    return this.currentActivity.get();
-  }
-
-  @NonNull
-  private View.OnClickListener buildDebugClickListener() {
-    return new View.OnClickListener() {
-      @Override
-      public void onClick(final View v) {
-        Activity activity = getCurrentActivity();
-        ViewUtil.dumpView(activity);
-        ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
-        List<View> allChildViews = ViewUtil.getAllChildViews(activity);
-        DragLayout parent = (DragLayout) root.findViewWithTag(TAG);
-
-        if (parent == null) {
-          parent = new DragLayout(activity);
-          parent.setTag(TAG);
-        }
-        parent.removeAllViews();
-        root.removeView(parent);
-
-        parent.setBackgroundColor(Color.WHITE);
-        parent.removeAllViews();
-        addFakeView(activity, parent, root, 0, 0);
-
-        root.addView(parent);
-      }
-    };
+    Activity activity = this.currentActivity.get();
+    if (activity == null) {
+      throw new RuntimeException("have not setup activity or activity had recycled");
+    }
+    return activity;
   }
 
   private void addFakeView(final Activity activity, ViewGroup parent, ViewGroup origin, int top, int left) {
