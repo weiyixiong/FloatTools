@@ -45,7 +45,7 @@
   <LinearLayout
       android:id="@+id/level2_viewgroup"
       android:layout_width="wrap_content"
-      android:layout_height="match_parent"
+      android:layout_height="100dp"
       android:orientation="horizontal"
       >
 
@@ -78,5 +78,12 @@
         android:src="@drawable/ic_drag_area"
         android:background="@color/grey2a"
         />
+
+
   </LinearLayout>
+
+  <com.wyx.flexdemo.BallView
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      />
 </LinearLayout>

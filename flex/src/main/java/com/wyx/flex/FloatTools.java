@@ -245,18 +245,6 @@ public class FloatTools {
   }
 
   private void installLayer(final Activity activity) {
-    if (touchLayer == null) {
-      touchLayer = new FrameLayout(activity.getApplicationContext());
-      touchLayer.setBackgroundColor(Color.TRANSPARENT);
-      touchLayer.setOnTouchListener(new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View view, MotionEvent motionEvent) {
-          currentActivity.get().dispatchTouchEvent(motionEvent);
-          EventInput.recordMotionEvent(motionEvent);
-          return false;
-        }
-      });
-    }
     if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
       AccessibilityUtil.openSetting(activity);
     } else {
@@ -349,7 +337,11 @@ public class FloatTools {
       touchLayer.setOnTouchListener(new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
-          currentActivity.get().dispatchTouchEvent(motionEvent);
+          //解决触摸传递的误差问题
+          MotionEvent ev =
+              EventInput.buildEvent(motionEvent.getAction(), motionEvent.getEventTime(), motionEvent.getRawX(),
+                                    motionEvent.getRawY(), motionEvent.getPressure());
+          currentActivity.get().dispatchTouchEvent(ev);
           EventInput.recordMotionEvent(motionEvent);
           return false;
         }
