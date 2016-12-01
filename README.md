@@ -3,6 +3,8 @@
 #功能
 1.在任意一个Activity内进行View级拖动，并且查看且View的各属性。
 
+![image](https://github.com/weiyixiong/FloatTools/gif/logcat_demo.gif) 
+
 2.捕捉当前App的Logcat
 3.为插件设置TriggerEvent。 点击插件上按钮触发预置事件
 4.录制点击和编辑事件，可以回放，并且设置成每次App启动时自动播放，解决每次修改代码后需要重新跳转到开发界面的情况。
