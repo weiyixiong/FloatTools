@@ -5,7 +5,9 @@ import android.content.Intent;
 import com.wyx.flex.activity.DetailInfoActivity;
 import com.wyx.flex.activity.LogCatActivity;
 import com.wyx.flex.activity.RecordActivity;
+import com.wyx.flex.activity.RecordEditActivity;
 import com.wyx.flex.record.Record;
+import com.wyx.flex.record.RecordEvent;
 
 /**
  * Created by winney on 16/5/11.
@@ -25,6 +27,12 @@ public class Navgation {
 
   public static void startRecordActivity(Activity activity) {
     Intent intent = new Intent(activity, RecordActivity.class);
+    activity.startActivity(intent);
+  }
+
+  public static void startEditEventActivity(Activity activity, long recordId) {
+    Intent intent = new Intent(activity, RecordEditActivity.class);
+    RecordEditActivity.putRecordId(intent, recordId);
     activity.startActivity(intent);
   }
 

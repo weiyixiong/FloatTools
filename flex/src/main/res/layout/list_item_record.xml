@@ -23,10 +23,17 @@
       />
 
   <Button
-      android:id="@+id/text_record_install"
+      android:id="@+id/btn_record_install"
       style="@style/RecordListItem"
       android:layout_weight="2"
       android:text="装载"
+      />
+
+  <Button
+      android:id="@+id/btn_record_edit"
+      style="@style/RecordListItem"
+      android:layout_weight="2"
+      android:text="编辑"
       />
 
   <ImageButton

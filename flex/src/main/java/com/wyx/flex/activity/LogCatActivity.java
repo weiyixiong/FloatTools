@@ -2,6 +2,7 @@ package com.wyx.flex.activity;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 import com.wyx.flex.util.LogCatUtil;
 import com.wyx.flex.R;
@@ -11,7 +12,7 @@ import com.wyx.flex.R;
  * @version 创建时间: 2016/08/05 上午11:29
  */
 
-public class LogCatActivity extends Activity {
+public class LogCatActivity extends AppCompatActivity {
   TextView logcat;
 
   @Override

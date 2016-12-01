@@ -1,9 +1,9 @@
 package com.wyx.flex.activity;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +16,7 @@ import com.wyx.flex.R;
 import com.wyx.flex.record.EventInput;
 import com.wyx.flex.record.Record;
 import com.wyx.flex.record.RecordEvent;
+import com.wyx.flex.util.Navgation;
 import com.wyx.flex.util.PrefUtil;
 import com.wyx.flex.util.TimeUtils;
 import java.util.List;
@@ -25,7 +26,7 @@ import java.util.List;
  * @version 创建时间: 2016/10/25 10:33
  */
 
-public class RecordActivity extends Activity {
+public class RecordActivity extends AppCompatActivity {
   private ListView recordList;
   recordAdapter adapter;
 
@@ -67,10 +68,11 @@ public class RecordActivity extends Activity {
     public long getItemId(int position) {
       return 0;
     }
+
     View.OnClickListener cancelAutoRun = new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        Record item = (Record) v.getTag();
+        Record item = adapter.getItem((Integer) v.getTag());
         PrefUtil.setPlayRecordOnLaunch(false, item.getId());
         updateList();
       }
@@ -113,10 +115,17 @@ public class RecordActivity extends Activity {
     View.OnClickListener deleteOnClick = new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        Record item = (Record) v.getTag();
+        Record item = adapter.getItem((Integer) v.getTag());
         RecordEvent.deleteAllRecordEventByID(item.getId());
         item.delete();
         updateList();
+      }
+    };
+    View.OnClickListener editEventOnClick = new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Record item = adapter.getItem((Integer) v.getTag());
+        Navgation.startEditEventActivity(RecordActivity.this, item.getId());
       }
     };
 
@@ -130,7 +139,8 @@ public class RecordActivity extends Activity {
         viewHolder.time = (TextView) convertView.findViewById(R.id.text_record_time);
         viewHolder.startActivity = (TextView) convertView.findViewById(R.id.text_record_activity);
         viewHolder.btnDelete = (ImageButton) convertView.findViewById(R.id.btn_delete);
-        viewHolder.btnInstall = (Button) convertView.findViewById(R.id.text_record_install);
+        viewHolder.btnInstall = (Button) convertView.findViewById(R.id.btn_record_install);
+        viewHolder.btnEdit = (Button) convertView.findViewById(R.id.btn_record_edit);
       } else {
         viewHolder = (ViewHolder) convertView.getTag();
       }
@@ -138,7 +148,8 @@ public class RecordActivity extends Activity {
       viewHolder.name.setText(item.getName());
       viewHolder.time.setText(TimeUtils.getDate(item.getTime()));
       viewHolder.startActivity.setText(item.getActivityName());
-      viewHolder.btnInstall.setTag(item);
+      viewHolder.btnInstall.setTag(position);
+      viewHolder.btnEdit.setTag(position);
       if (currentRecordId == item.getId()) {
         if (PrefUtil.isPlayRecordOnLaunch()) {
           viewHolder.btnInstall.setText("取消自启");
@@ -151,6 +162,7 @@ public class RecordActivity extends Activity {
         viewHolder.btnInstall.setText("装载");
         viewHolder.btnInstall.setOnClickListener(installOnClickListener);
       }
+      viewHolder.btnEdit.setOnClickListener(editEventOnClick);
       viewHolder.btnDelete.setOnClickListener(deleteOnClick);
       return convertView;
     }
@@ -167,6 +179,7 @@ public class RecordActivity extends Activity {
     TextView time;
     TextView startActivity;
     Button btnInstall;
+    Button btnEdit;
     ImageButton btnDelete;
   }
 }
