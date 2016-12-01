@@ -3,7 +3,7 @@
 #功能
 1.在任意一个Activity内进行View级拖动，并且查看且View的各属性。
 
-![image](https://github.com/weiyixiong/FloatTools/gif/logcat_demo.gif) 
+![image](https://github.com/weiyixiong/FloatTools/blob/master/gif/logcat_demo.gif) 
 
 2.捕捉当前App的Logcat
 3.为插件设置TriggerEvent。 点击插件上按钮触发预置事件
