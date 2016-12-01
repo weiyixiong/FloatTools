@@ -47,6 +47,7 @@ public class RecordEvent extends Model {
   }
 
   public RecordEvent(String viewId, String s, long currentTime) {
+    this.type = EventType.EDIT;
     this.resName = viewId;
     this.text = s;
     this.time = currentTime;

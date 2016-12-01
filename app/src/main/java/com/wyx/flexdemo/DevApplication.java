@@ -11,7 +11,10 @@ public class DevApplication extends android.app.Application {
   @Override
   public void onCreate() {
     super.onCreate();
+
     FloatTools.init(this);
+    FloatTools.setConfig(
+        new FloatConfig.Builder().setLogCatEnabled(false).setShowLogCatWindow(false).setTriggerEnabled(false).create());
     FloatTools.setTriggerEvent(new Runnable() {
       @Override
       public void run() {

@@ -72,11 +72,16 @@ public class RecordActivity extends AppCompatActivity {
     View.OnClickListener cancelAutoRun = new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        Record item = adapter.getItem((Integer) v.getTag());
+        Record item = getItemByViewTag(v);
         PrefUtil.setPlayRecordOnLaunch(false, item.getId());
         updateList();
       }
     };
+
+    private Record getItemByViewTag(View v) {
+      return adapter.getItem((Integer) v.getTag());
+    }
+
     View.OnClickListener cancelUse = new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -87,7 +92,7 @@ public class RecordActivity extends AppCompatActivity {
     View.OnClickListener installOnClickListener = new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        final Record item = (Record) v.getTag();
+        final Record item = getItemByViewTag(v);
         EventInput.installRecord(item);
         AlertDialog.Builder builder = new AlertDialog.Builder(RecordActivity.this);
         builder.setMessage("是否在应用启动时自动运行？");
@@ -115,7 +120,7 @@ public class RecordActivity extends AppCompatActivity {
     View.OnClickListener deleteOnClick = new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        Record item = adapter.getItem((Integer) v.getTag());
+        Record item = getItemByViewTag(v);
         RecordEvent.deleteAllRecordEventByID(item.getId());
         item.delete();
         updateList();
@@ -124,7 +129,7 @@ public class RecordActivity extends AppCompatActivity {
     View.OnClickListener editEventOnClick = new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        Record item = adapter.getItem((Integer) v.getTag());
+        Record item = getItemByViewTag(v);
         Navgation.startEditEventActivity(RecordActivity.this, item.getId());
       }
     };
@@ -148,8 +153,8 @@ public class RecordActivity extends AppCompatActivity {
       viewHolder.name.setText(item.getName());
       viewHolder.time.setText(TimeUtils.getDate(item.getTime()));
       viewHolder.startActivity.setText(item.getActivityName());
-      viewHolder.btnInstall.setTag(position);
-      viewHolder.btnEdit.setTag(position);
+
+      viewHolder.updatePosition(position);
       if (currentRecordId == item.getId()) {
         if (PrefUtil.isPlayRecordOnLaunch()) {
           viewHolder.btnInstall.setText("取消自启");
@@ -181,5 +186,11 @@ public class RecordActivity extends AppCompatActivity {
     Button btnInstall;
     Button btnEdit;
     ImageButton btnDelete;
+
+    public void updatePosition(int position) {
+      btnInstall.setTag(position);
+      btnEdit.setTag(position);
+      btnDelete.setTag(position);
+    }
   }
 }

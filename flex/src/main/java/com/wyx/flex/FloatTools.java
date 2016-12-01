@@ -444,6 +444,7 @@ public class FloatTools {
     btnRecord.setOnClickListener(floatButtonsOnClickListener);
     btnDebug.setOnClickListener(floatButtonsOnClickListener);
     btnReset.setOnClickListener(floatButtonsOnClickListener);
+    btnReplay.setOnClickListener(floatButtonsOnClickListener);
     btnRecord.setOnLongClickListener(new View.OnLongClickListener() {
       @Override
       public boolean onLongClick(View v) {

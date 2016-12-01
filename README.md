@@ -14,6 +14,8 @@
 
 
 4.录制点击和编辑事件，可以回放，并且设置成每次App启动时自动播放，解决每次修改代码后需要重新跳转到开发界面的情况。
+录制
+![image](https://github.com/weiyixiong/FloatTools/blob/master/gif/record2.gif)
 
-
-
+回放
+![image](https://github.com/weiyixiong/FloatTools/blob/master/gif/replay2.gif)
