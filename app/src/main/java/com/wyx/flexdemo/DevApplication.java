@@ -1,5 +1,6 @@
 package com.wyx.flexdemo;
 
+import android.widget.Toast;
 import com.wyx.flex.FloatTools;
 import com.wyx.flex.util.FloatConfig;
 
@@ -11,6 +12,13 @@ public class DevApplication extends android.app.Application {
   public void onCreate() {
     super.onCreate();
     FloatTools.init(this);
+    FloatTools.setTriggerEvent(new Runnable() {
+      @Override
+      public void run() {
+        Toast.makeText(DevApplication.this, FloatTools.getInstance().getCurrentActivity().toString(),
+                       Toast.LENGTH_SHORT).show();
+      }
+    });
     FloatTools.setDebug(true);
   }
 }
