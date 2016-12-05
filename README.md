@@ -26,7 +26,16 @@
 ***
 Gradle:
 ``` groovy
-compile 'com.blankj:utilcode:1.3.4'
+allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+
+	dependencies {
+	    compile 'com.github.weiyixiong:FloatTools:1.4.3'
+	}
 ```
 
 ### 使用方法
