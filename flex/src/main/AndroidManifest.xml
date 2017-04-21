@@ -21,6 +21,7 @@
     <activity android:name=".activity.RecordEditActivity" />
     <activity
         android:name=".activity.LogCatActivity"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
         android:launchMode="singleInstance"
         />
     <activity

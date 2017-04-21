@@ -32,12 +32,12 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.activeandroidlib.ActiveAndroid;
-import com.activeandroidlib.Configuration;
+import com.activeandroid.ActiveAndroid;
+import com.activeandroid.Configuration;
+import com.wyx.flex.record.EventInput;
 import com.wyx.flex.record.Record;
 import com.wyx.flex.record.RecordEvent;
 import com.wyx.flex.util.AccessibilityUtil;
-import com.wyx.flex.record.EventInput;
 import com.wyx.flex.util.FloatConfig;
 import com.wyx.flex.util.L;
 import com.wyx.flex.util.LogCatUtil;
@@ -411,8 +411,7 @@ public class FloatTools {
 
   private void initFloatView(final Activity activity) {
     wmParams = new WindowManager.LayoutParams();
-    mWindowManager =
-        (WindowManager) activity.getApplication().getSystemService(activity.getApplication().WINDOW_SERVICE);
+    mWindowManager = (WindowManager) activity.getApplication().getSystemService(Context.WINDOW_SERVICE);
     wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
     wmParams.format = PixelFormat.RGBA_8888;
     wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
