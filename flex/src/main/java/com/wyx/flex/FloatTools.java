@@ -13,6 +13,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -99,8 +100,12 @@ public class FloatTools {
     void OnActivityResumed();
   }
 
-  public static void init(Application application) {
-    Configuration dbConfiguration = new Configuration.Builder(application).setDatabaseName("Record.db")
+  public static void init(Application application, @Nullable String dbName) {
+    initWithDbName(application, dbName == null ? "Record.db" : dbName);
+  }
+
+  public static void initWithDbName(Application application, String dbName) {
+    Configuration dbConfiguration = new Configuration.Builder(application).setDatabaseName(dbName)
                                                                           .setModelClasses(Record.class,
                                                                                            RecordEvent.class)
                                                                           .create();
