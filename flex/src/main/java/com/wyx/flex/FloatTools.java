@@ -34,7 +34,10 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.activeandroid.ActiveAndroid;
+import com.activeandroid.Cache;
 import com.activeandroid.Configuration;
+import com.activeandroid.TableInfo;
+import com.activeandroid.util.SQLiteUtils;
 import com.wyx.flex.record.EventInput;
 import com.wyx.flex.record.Record;
 import com.wyx.flex.record.RecordEvent;
@@ -105,12 +108,19 @@ public class FloatTools {
   }
 
   public static void initWithDbName(Application application, String dbName) {
-    Configuration dbConfiguration = new Configuration.Builder(application).setDatabaseName(dbName)
-                                                                          .setModelClasses(Record.class,
-                                                                                           RecordEvent.class)
-                                                                          .create();
+    if (Cache.isInitialized()) {
+      SQLiteUtils.createTableDefinition(new TableInfo(Record.class));
+      SQLiteUtils.createTableDefinition(new TableInfo(RecordEvent.class));
+    } else {
+      Configuration dbConfiguration = new Configuration.Builder(application).setDatabaseName(dbName)
+                                                                            .setModelClasses(Record.class,
+                                                                                             RecordEvent.class)
+                                                                            .create();
+      ActiveAndroid.initialize(dbConfiguration);
+    }
+
     autoRunControlHandler = new Handler();
-    ActiveAndroid.initialize(dbConfiguration);
+
     PrefUtil.init(application);
     ShakeDetectorUtil.init(application);
     FloatTools.application = application;
