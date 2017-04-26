@@ -12,9 +12,9 @@ public class DevApplication extends android.app.Application {
   public void onCreate() {
     super.onCreate();
 
-    FloatTools.init(this);
+    FloatTools.init(this, null);
     FloatTools.setConfig(
-        new FloatConfig.Builder().setLogCatEnabled(true).setShowLogCatWindow(false).setTriggerEnabled(false).create());
+        new FloatConfig.Builder().setLogCatEnabled(true).setShowLogCatWindow(true).setTriggerEnabled(false).create());
     FloatTools.setTriggerEvent(new Runnable() {
       @Override
       public void run() {
@@ -22,6 +22,6 @@ public class DevApplication extends android.app.Application {
                        Toast.LENGTH_SHORT).show();
       }
     });
-    FloatTools.setDebug(true);
+    FloatTools.setDebug(false);
   }
 }

@@ -1,10 +1,10 @@
 package com.wyx.flex.record;
 
-import com.activeandroidlib.Model;
-import com.activeandroidlib.annotation.Column;
-import com.activeandroidlib.annotation.Table;
-import com.activeandroidlib.query.Delete;
-import com.activeandroidlib.query.Select;
+import com.activeandroid.Model;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
+import com.activeandroid.query.Delete;
+import com.activeandroid.query.Select;
 import java.util.List;
 
 @Table(name = "RecordEvent")

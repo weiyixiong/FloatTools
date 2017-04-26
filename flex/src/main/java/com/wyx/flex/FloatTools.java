@@ -13,6 +13,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -99,13 +100,24 @@ public class FloatTools {
     void OnActivityResumed();
   }
 
-  public static void init(Application application) {
-    Configuration dbConfiguration = new Configuration.Builder(application).setDatabaseName("Record.db")
-                                                                          .setModelClasses(Record.class,
-                                                                                           RecordEvent.class)
-                                                                          .create();
+  public static void init(Application application, @Nullable String dbName) {
+    initWithDbName(application, dbName == null ? "Record.db" : dbName);
+  }
+
+  public static void initWithDbName(Application application, String dbName) {
+    if (Cache.isInitialized()) {
+      SQLiteUtils.createTableDefinition(new TableInfo(Record.class));
+      SQLiteUtils.createTableDefinition(new TableInfo(RecordEvent.class));
+    } else {
+      Configuration dbConfiguration = new Configuration.Builder(application).setDatabaseName(dbName)
+                                                                            .setModelClasses(Record.class,
+                                                                                             RecordEvent.class)
+                                                                            .create();
+      ActiveAndroid.initialize(dbConfiguration);
+    }
+
     autoRunControlHandler = new Handler();
-    ActiveAndroid.initialize(dbConfiguration);
+
     PrefUtil.init(application);
     ShakeDetectorUtil.init(application);
     FloatTools.application = application;
@@ -411,8 +423,7 @@ public class FloatTools {
 
   private void initFloatView(final Activity activity) {
     wmParams = new WindowManager.LayoutParams();
-    mWindowManager =
-        (WindowManager) activity.getApplication().getSystemService(activity.getApplication().WINDOW_SERVICE);
+    mWindowManager = (WindowManager) activity.getApplication().getSystemService(Context.WINDOW_SERVICE);
     wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
     wmParams.format = PixelFormat.RGBA_8888;
     wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
