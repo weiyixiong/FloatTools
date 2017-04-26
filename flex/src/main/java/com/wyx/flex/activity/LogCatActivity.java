@@ -1,11 +1,10 @@
 package com.wyx.flex.activity;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
-import com.wyx.flex.util.LogCatUtil;
 import com.wyx.flex.R;
+import com.wyx.flex.util.LogCatUtil;
 
 /**
  * @author winney E-mail: weiyixiong@tigerbrokers.com
@@ -14,6 +13,7 @@ import com.wyx.flex.R;
 
 public class LogCatActivity extends AppCompatActivity {
   TextView logcat;
+  LogCatUtil.LogcatUpdateListener logcatUpdateListener;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -21,11 +21,7 @@ public class LogCatActivity extends AppCompatActivity {
     setContentView(R.layout.activity_logcat);
 
     logcat = (TextView) findViewById(R.id.tv_loginfo);
-    startLogCat();
-  }
-
-  private void startLogCat() {
-    LogCatUtil.addUpdateListener(new LogCatUtil.LogcatUpdateListener() {
+    logcatUpdateListener = new LogCatUtil.LogcatUpdateListener() {
       @Override
       public void onUpdate(final String log) {
         logcat.post(new Runnable() {
@@ -35,6 +31,17 @@ public class LogCatActivity extends AppCompatActivity {
           }
         });
       }
-    });
+    };
+    startLogCat();
+  }
+
+  @Override
+  protected void onPause() {
+    LogCatUtil.removeUpdateListener(logcatUpdateListener);
+    super.onPause();
+  }
+
+  private void startLogCat() {
+    LogCatUtil.addUpdateListener(logcatUpdateListener);
   }
 }
