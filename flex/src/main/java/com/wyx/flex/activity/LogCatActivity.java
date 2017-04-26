@@ -2,8 +2,6 @@ package com.wyx.flex.activity;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.widget.ArrayAdapter;
-import android.widget.Spinner;
 import android.widget.TextView;
 import com.wyx.flex.R;
 import com.wyx.flex.util.LogCatUtil;
@@ -15,7 +13,7 @@ import com.wyx.flex.util.LogCatUtil;
 
 public class LogCatActivity extends AppCompatActivity {
   TextView logcat;
-  Spinner logType;
+  LogCatUtil.LogcatUpdateListener logcatUpdateListener;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -23,15 +21,7 @@ public class LogCatActivity extends AppCompatActivity {
     setContentView(R.layout.activity_logcat);
 
     logcat = (TextView) findViewById(R.id.tv_loginfo);
-    logType = (Spinner) findViewById(R.id.spinner_log_type);
-    ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
-    adapter.addAll("debug", "error", "warning", "verbose");
-    logType.setAdapter(adapter);
-    startLogCat();
-  }
-
-  private void startLogCat() {
-    LogCatUtil.addUpdateListener(new LogCatUtil.LogcatUpdateListener() {
+    logcatUpdateListener = new LogCatUtil.LogcatUpdateListener() {
       @Override
       public void onUpdate(final String log) {
         logcat.post(new Runnable() {
@@ -41,6 +31,17 @@ public class LogCatActivity extends AppCompatActivity {
           }
         });
       }
-    });
+    };
+    startLogCat();
+  }
+
+  @Override
+  protected void onPause() {
+    LogCatUtil.removeUpdateListener(logcatUpdateListener);
+    super.onPause();
+  }
+
+  private void startLogCat() {
+    LogCatUtil.addUpdateListener(logcatUpdateListener);
   }
 }

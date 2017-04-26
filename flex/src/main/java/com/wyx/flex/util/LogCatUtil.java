@@ -15,13 +15,12 @@ import java.util.Queue;
  */
 public class LogCatUtil {
   private static final int LIMIT_LINE = 100;
-  public static final int TIME_SCHEDULE = 1000;
-  static Queue<String> cache = new ArrayDeque<>();
+  public static final int TIME_SCHEDULE = 3000;
+  private static Queue<String> cache = new ArrayDeque<>();
 
-  static ArrayList<String> commandLine = new ArrayList<String>();
+  private static ArrayList<String> commandLine = new ArrayList<String>();
   //commandLine.add("*:E"); // 过滤所有的错误信息
-
-  static ArrayList<String> clearLog = new ArrayList<String>();  //设置命令  logcat -c 清除日志
+  private static ArrayList<String> clearLog = new ArrayList<String>();  //设置命令  logcat -c 清除日志
 
   static {
     commandLine.add("logcat");
@@ -69,9 +68,13 @@ public class LogCatUtil {
       handler = new InnerLogCatHandler();
     }
     if (!handler.hasMessages(1)) {
-      handler.sendEmptyMessageDelayed(1, TIME_SCHEDULE);
+      handler.sendEmptyMessageDelayed(1, 0);
     }
     logcatUpdateListeners.add(logcatUpdateListener);
+  }
+
+  public static void removeUpdateListener(LogcatUpdateListener logcatUpdateListener) {
+    logcatUpdateListeners.remove(logcatUpdateListener);
   }
 
   public interface LogcatUpdateListener {

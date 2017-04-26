@@ -33,11 +33,8 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.activeandroid.ActiveAndroid;
-import com.activeandroid.Cache;
-import com.activeandroid.Configuration;
-import com.activeandroid.TableInfo;
-import com.activeandroid.util.SQLiteUtils;
+import com.activeandroidlib.ActiveAndroid;
+import com.activeandroidlib.Configuration;
 import com.wyx.flex.record.EventInput;
 import com.wyx.flex.record.Record;
 import com.wyx.flex.record.RecordEvent;
@@ -87,7 +84,7 @@ public class FloatTools {
   private TextView logInfo;
   private ScrollView logCatWrapper;
   private static Handler autoRunControlHandler;
-
+  private LogCatUtil.LogcatUpdateListener logcatUpdateListener;
   private PointF touchDownPoint;
 
   private int floatViewStatus = View.INVISIBLE;
@@ -459,6 +456,17 @@ public class FloatTools {
     btnDebug.setOnClickListener(floatButtonsOnClickListener);
     btnReset.setOnClickListener(floatButtonsOnClickListener);
     btnReplay.setOnClickListener(floatButtonsOnClickListener);
+    logcatUpdateListener = new LogCatUtil.LogcatUpdateListener() {
+      @Override
+      public void onUpdate(final String log) {
+        logInfo.post(new Runnable() {
+          @Override
+          public void run() {
+            logInfo.setText(log);
+          }
+        });
+      }
+    };
     btnRecord.setOnLongClickListener(new View.OnLongClickListener() {
       @Override
       public boolean onLongClick(View v) {
@@ -577,14 +585,17 @@ public class FloatTools {
     }
 
     private void onClickLogInfo() {
+      onClickLogCat();
       Navgation.startLogCatActivity(getCurrentActivity());
     }
 
     private void onClickLogCat() {
       if (logInfo.isShown()) {
         logCatWrapper.setVisibility(View.GONE);
+        LogCatUtil.removeUpdateListener(logcatUpdateListener);
       } else {
         logCatWrapper.setVisibility(View.VISIBLE);
+        LogCatUtil.addUpdateListener(logcatUpdateListener);
       }
     }
   };
@@ -592,7 +603,6 @@ public class FloatTools {
   private void initWithConfig() {
     if (config.isLogCatEnabled()) {
       btnLogcat.setVisibility(View.VISIBLE);
-      startLogCat();
     } else {
       btnLogcat.setVisibility(View.GONE);
     }
@@ -655,20 +665,6 @@ public class FloatTools {
 
   public static void setTriggerEvent(Runnable runnable) {
     triggerEvent = runnable;
-  }
-
-  private void startLogCat() {
-    LogCatUtil.addUpdateListener(new LogCatUtil.LogcatUpdateListener() {
-      @Override
-      public void onUpdate(final String log) {
-        logInfo.post(new Runnable() {
-          @Override
-          public void run() {
-            logInfo.setText(log);
-          }
-        });
-      }
-    });
   }
 
   public Activity getCurrentActivity() {
