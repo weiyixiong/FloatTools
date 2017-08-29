@@ -362,14 +362,9 @@ public class FloatTools {
     try {
       int rawX = (int) ev.getRawX();
       int rawY = (int) ev.getRawY();
-      final Class<?> windowManagerImpl = Class.forName("android.view.WindowManagerImpl");
-      final Class<?> windowManagerGlobal = Class.forName("android.view.WindowManagerGlobal");
+      final ArrayList<View> views = getAppAllViews();
       final Class<?> viewRootImpl = Class.forName("android.view.ViewRootImpl");
       final Field mWinFrame = ReflectionUtil.getField(viewRootImpl, "mWinFrame", Rect.class);
-      final Field mGlobal = ReflectionUtil.getField(windowManagerImpl, "mGlobal", windowManagerGlobal);
-      final Object global = mGlobal.get(currentActivity.get().getSystemService(Context.WINDOW_SERVICE));
-      final Field mViews = ReflectionUtil.getField(windowManagerGlobal, "mViews", ArrayList.class);
-      final ArrayList<View> views = (ArrayList<View>) mViews.get(global);
       for (int i = views.size() - 1; i >= 0; i--) {
         final View view = views.get(i);
         if (view.getClass().getName().equals("com.android.internal.policy.PhoneWindow$DecorView")) {
@@ -393,6 +388,15 @@ public class FloatTools {
     } catch (IllegalAccessException e) {
       e.printStackTrace();
     }
+  }
+
+  private ArrayList<View> getAppAllViews() throws ClassNotFoundException, IllegalAccessException {
+    final Class<?> windowManagerImpl = Class.forName("android.view.WindowManagerImpl");
+    final Class<?> windowManagerGlobal = Class.forName("android.view.WindowManagerGlobal");
+    final Field mGlobal = ReflectionUtil.getField(windowManagerImpl, "mGlobal", windowManagerGlobal);
+    final Object global = mGlobal.get(currentActivity.get().getSystemService(Context.WINDOW_SERVICE));
+    final Field mViews = ReflectionUtil.getField(windowManagerGlobal, "mViews", ArrayList.class);
+    return (ArrayList<View>) mViews.get(global);
   }
 
   public void stopRecording() {
@@ -564,7 +568,6 @@ public class FloatTools {
 
     private void onCLickDebug() {
       Activity activity = getCurrentActivity();
-      ViewUtil.dumpView(activity);
       ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
       DragLayout parent = (DragLayout) root.findViewWithTag(TAG);
       if (parent == null) {
@@ -575,7 +578,20 @@ public class FloatTools {
       root.removeView(parent);
       parent.setBackgroundColor(Color.WHITE);
       parent.removeAllViews();
-      addFakeView(activity, parent, root, 0, 0);
+      try {
+        final ArrayList<View> views = getAppAllViews();
+        for (View view : views) {
+          if (view == mFloatLayout) {
+            continue;
+          }
+          ViewUtil.dumpView((ViewGroup) view, activity);
+          addFakeView(activity, parent, (ViewGroup) view, 0, 0);
+        }
+      } catch (ClassNotFoundException e) {
+        e.printStackTrace();
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+      }
       root.addView(parent);
     }
 

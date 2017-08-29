@@ -1,6 +1,7 @@
 package com.wyx.flex.util;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.view.View;
@@ -51,11 +52,10 @@ public class ViewUtil {
   /**
    * dump view info and parse it
    *
-   * @param activity the activity you want to dump view
+   * @param root the View you want to dump view
    */
-  public static void dumpView(Activity activity) {
-    ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
-    File dumpDir = StorageUtils.getIndividualCacheDirectory(activity, "viewData");
+  public static void dumpView(ViewGroup root, Context context) {
+    File dumpDir = StorageUtils.getIndividualCacheDirectory(context, "viewData");
     if (!dumpDir.exists()) {
       dumpDir.mkdirs();
     }
@@ -87,10 +87,9 @@ public class ViewUtil {
     return allChildren;
   }
 
-   public static boolean isInside(float x, float y, View child) {
+  public static boolean isInside(float x, float y, View child) {
     Rect rect = new Rect();
     child.getGlobalVisibleRect(rect);
-    return x >= rect.left && x < rect.right &&
-        y >= rect.top && y < rect.bottom;
+    return x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom;
   }
 }
