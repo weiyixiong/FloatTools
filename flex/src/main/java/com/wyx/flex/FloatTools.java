@@ -378,7 +378,7 @@ public class FloatTools {
         view.getGlobalVisibleRect(touchArea);
         rawX = (int) ev.getRawX();
         rawY = (int) ev.getRawY();
-        if (view != touchLayer && touchArea.contains(rawX, rawY)) {
+        if (view != touchLayer && view != mFloatLayout && touchArea.contains(rawX, rawY)) {
           view.dispatchTouchEvent(ev);
           return;
         }
