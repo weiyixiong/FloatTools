@@ -13,6 +13,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.v4.view.InputDeviceCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -43,12 +44,15 @@ import com.wyx.flex.util.L;
 import com.wyx.flex.util.LogCatUtil;
 import com.wyx.flex.util.Navgation;
 import com.wyx.flex.util.PrefUtil;
+import com.wyx.flex.util.ReflectionUtil;
 import com.wyx.flex.util.ShakeDetector;
 import com.wyx.flex.util.ShakeDetectorUtil;
 import com.wyx.flex.util.ViewUtil;
 import com.wyx.flex.view.BorderImageView;
 import com.wyx.flex.view.DragLayout;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -319,8 +323,9 @@ public class FloatTools {
           MotionEvent ev =
               EventInput.buildEvent(motionEvent.getAction(), motionEvent.getEventTime(), motionEvent.getRawX(),
                                     motionEvent.getRawY(), motionEvent.getPressure());
-          currentActivity.get().dispatchTouchEvent(ev);
-          EventInput.recordMotionEvent(motionEvent);
+          //currentActivity.get().dispatchTouchEvent(ev);
+          dispatchTouchEvents(ev);
+          EventInput.recordMotionEvent(ev);
           return false;
         }
       });
@@ -348,6 +353,45 @@ public class FloatTools {
         Toast.makeText(this.currentActivity.get(), "started", Toast.LENGTH_SHORT).show();
         updateRecordBthText();
       }
+    }
+  }
+
+  private Rect touchArea = new Rect();
+
+  private void dispatchTouchEvents(MotionEvent ev) {
+    try {
+      int rawX = (int) ev.getRawX();
+      int rawY = (int) ev.getRawY();
+      final Class<?> windowManagerImpl = Class.forName("android.view.WindowManagerImpl");
+      final Class<?> windowManagerGlobal = Class.forName("android.view.WindowManagerGlobal");
+      final Class<?> viewRootImpl = Class.forName("android.view.ViewRootImpl");
+      final Field mWinFrame = ReflectionUtil.getField(viewRootImpl, "mWinFrame", Rect.class);
+      final Field mGlobal = ReflectionUtil.getField(windowManagerImpl, "mGlobal", windowManagerGlobal);
+      final Object global = mGlobal.get(currentActivity.get().getSystemService(Context.WINDOW_SERVICE));
+      final Field mViews = ReflectionUtil.getField(windowManagerGlobal, "mViews", ArrayList.class);
+      final ArrayList<View> views = (ArrayList<View>) mViews.get(global);
+      for (int i = views.size() - 1; i >= 0; i--) {
+        final View view = views.get(i);
+        if (view.getClass().getName().equals("com.android.internal.policy.PhoneWindow$DecorView")) {
+          final Rect rect = (Rect) mWinFrame.get(view.getParent());
+          MotionEvent obtain =
+              MotionEvent.obtain(ev.getDownTime(), ev.getEventTime(), ev.getAction(), rawX - rect.left, rawY - rect.top,
+                                 1.0f, 1.0f, 0, 1.0f, 1.0f, 0, 0);
+          obtain.setSource(InputDeviceCompat.SOURCE_TOUCHSCREEN);
+          ev = obtain;
+        }
+        view.getGlobalVisibleRect(touchArea);
+        rawX = (int) ev.getRawX();
+        rawY = (int) ev.getRawY();
+        if (view != touchLayer && touchArea.contains(rawX, rawY)) {
+          view.dispatchTouchEvent(ev);
+          return;
+        }
+      }
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
     }
   }
 
@@ -623,7 +667,8 @@ public class FloatTools {
   }
 
   public void onTouch(MotionEvent event) {
-    getCurrentActivity().dispatchTouchEvent(event);
+    dispatchTouchEvents(event);
+    //getCurrentActivity().dispatchTouchEvent(event);
   }
 
   public void onEdit(RecordEvent event) {

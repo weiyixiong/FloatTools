@@ -1,12 +1,11 @@
 package com.wyx.flexdemo;
 
-import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
-import android.view.MotionEvent;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
-import com.wyx.flex.util.L;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -17,15 +16,29 @@ public class MainActivity extends AppCompatActivity {
     findViewById(R.id.test_btn).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        Intent i = new Intent(MainActivity.this, SecondActivity.class);
-        startActivity(i);
+        dialog();
+        //Intent i = new Intent(MainActivity.this, SecondActivity.class);
+        //startActivity(i);
       }
     });
   }
 
-  //@Override
-  //public boolean dispatchTouchEvent(MotionEvent ev) {
-  //  L.e(ev.toString());
-  //  return super.dispatchTouchEvent(ev);
-  //}
+  protected void dialog() {
+    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+    builder.setMessage("确认退出吗？");
+    builder.setTitle("提示");
+    builder.setPositiveButton("确认", new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        Toast.makeText(getBaseContext(), "123123123", Toast.LENGTH_SHORT).show();
+      }
+    });
+    builder.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        Toast.makeText(getBaseContext(), "cancel", Toast.LENGTH_SHORT).show();
+      }
+    });
+    builder.create().show();
+  }
 }
