@@ -367,7 +367,9 @@ public class FloatTools {
       final Field mWinFrame = ReflectionUtil.getField(viewRootImpl, "mWinFrame", Rect.class);
       for (int i = views.size() - 1; i >= 0; i--) {
         final View view = views.get(i);
-        if (view.getClass().getName().equals("com.android.internal.policy.PhoneWindow$DecorView")) {
+        final String name = view.getClass().getName();
+        if (name.equals("com.android.internal.policy.PhoneWindow$DecorView") ||
+            name.equals("android.widget.PopupWindow$PopupDecorView")) {
           final Rect rect = (Rect) mWinFrame.get(view.getParent());
           MotionEvent obtain =
               MotionEvent.obtain(ev.getDownTime(), ev.getEventTime(), ev.getAction(), rawX - rect.left, rawY - rect.top,
