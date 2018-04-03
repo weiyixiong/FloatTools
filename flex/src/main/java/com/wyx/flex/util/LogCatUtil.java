@@ -34,7 +34,7 @@ public class LogCatUtil {
     try {
       Process process = Runtime.getRuntime().exec(commandLine.toArray(new String[commandLine.size()]));
       BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-      String line = null;
+      String line;
       while (true) {
         line = bufferedReader.readLine();
         if (line == null) {
@@ -55,10 +55,10 @@ public class LogCatUtil {
     return strLogcatInfo;
   }
 
-  public static String getCacheLog() {
+  public static String getCacheLogByFilter(String keyWord) {
     StringBuilder res = new StringBuilder();
     for (String s : cache) {
-      res.append(s).append("\n");
+      if (keyWord == null || s.contains(keyWord)) res.append(s).append("\n");
     }
     return res.toString();
   }
@@ -71,6 +71,11 @@ public class LogCatUtil {
       handler.sendEmptyMessageDelayed(1, 0);
     }
     logcatUpdateListeners.add(logcatUpdateListener);
+  }
+
+  public static void setKeyword(String keyword) {
+    handler.setKeyWord(keyword);
+    handler.sendEmptyMessageDelayed(2, TIME_SCHEDULE);
   }
 
   public static void removeUpdateListener(LogcatUpdateListener logcatUpdateListener) {
@@ -86,16 +91,22 @@ public class LogCatUtil {
 
   private static class InnerLogCatHandler extends Handler {
 
+    private String keyWord;
+
+    public void setKeyWord(String keyWord) {
+      this.keyWord = keyWord;
+    }
+
     @Override
     public void handleMessage(Message msg) {
       super.handleMessage(msg);
       try {
         LogCatUtil.getLogcatInfo();
-        String cacheLog = LogCatUtil.getCacheLog();
+        String cacheLog = LogCatUtil.getCacheLogByFilter(keyWord);
         for (LogcatUpdateListener logcatUpdateListener : logcatUpdateListeners) {
           logcatUpdateListener.onUpdate(cacheLog);
         }
-        if (logcatUpdateListeners.size() != 0) {
+        if (logcatUpdateListeners.size() != 0 && msg.what == 1) {
           sendEmptyMessageDelayed(1, TIME_SCHEDULE);
         }
       } catch (IOException e) {
