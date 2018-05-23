@@ -759,7 +759,7 @@ public class FloatTools {
         if (view.getMeasuredWidth() == 0 || view.getMeasuredHeight() == 0) {
           continue;
         }
-        Bitmap bitmap = Bitmap.createBitmap(view.getMeasuredWidth(), view.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(view.getMeasuredWidth(), view.getMeasuredHeight(), Bitmap.Config.ARGB_4444);
         view.draw(new Canvas(bitmap));
         tmp.setImageBitmap(bitmap);
         parent.addView(tmp);
