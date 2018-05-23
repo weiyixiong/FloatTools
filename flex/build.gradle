@@ -1,14 +1,14 @@
 apply plugin: 'com.android.library'
-//apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.github.dcendents.android-maven'
 
 group = 'com.github.weiyixiong'
 android {
-  compileSdkVersion 27
+  compileSdkVersion 26
   buildToolsVersion '26.0.2'
 
   defaultConfig {
     minSdkVersion 14
-    targetSdkVersion 27
+    targetSdkVersion 26
   }
   buildTypes {
     release {
@@ -20,5 +20,5 @@ android {
 dependencies {
   implementation fileTree(dir: 'libs', include: ['*.jar'])
   testImplementation 'junit:junit:4.12'
-  compileOnly 'com.android.support:appcompat-v7:27.0.2'
+  compileOnly 'com.android.support:appcompat-v7:26.0.2'
 }
