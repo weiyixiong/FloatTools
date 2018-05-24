@@ -36,26 +36,11 @@ public class DragLayout extends FrameLayout {
 
       @Override
       public int clampViewPositionHorizontal(View child, int left, int dx) {
-        //if (getPaddingLeft() > left) {
-        //  return getPaddingLeft();
-        //}
-        //
-        //if (getWidth() - child.getWidth() < left) {
-        //  return getWidth() - child.getWidth();
-        //}
-
         return left;
       }
 
       @Override
       public int clampViewPositionVertical(View child, int top, int dy) {
-        //if (getPaddingTop() > top) {
-        //  return getPaddingTop();
-        //}
-        //
-        //if (getHeight() - child.getHeight() < top) {
-        //  return getHeight() - child.getHeight();
-        //}
         return top;
       }
 

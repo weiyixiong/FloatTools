@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -743,6 +744,9 @@ public class FloatTools {
         params.topMargin = location[1] - top;
         params.leftMargin = location[0] - left;
         frameLayout.setLayoutParams(params);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+          frameLayout.setBackground(view.getBackground());
+        }
         parent.addView(frameLayout);
         addFakeView(activity, frameLayout, (ViewGroup) view, location[1], location[0]);
         frameLayout.setOnLongClickListener(new View.OnLongClickListener() {
