@@ -284,23 +284,25 @@ public class FloatTools {
   private void updateRecordBthText() {
     if (touchLayerStatus == STOPPED) {
       btnRecord.setText("Record");
-    } else if (touchLayerStatus == RECORDING) {
+    } else if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
       btnRecord.setText("stop");
-    } else {
-      btnRecord.setText("complete input");
     }
   }
 
-  private void completeInput() {
+  public void completeInput(boolean hideIME) {
     if (this.currentEditText == null) {
       return;
     }
+
     EditText view = this.currentEditText.get();
+    if (hideIME) {
+      hideIME(view);
+    }
     completeInput(view);
   }
 
-  private void completeInput(TextView view) {
-    hideIME(view);
+  public void completeInput(TextView view) {
+
     if (view.getId() == View.NO_ID) {
       Rect rect = new Rect();
       view.getGlobalVisibleRect(rect);
@@ -408,7 +410,7 @@ public class FloatTools {
       touchLayerStatus = STOPPED;
       updateRecordBthText();
       Activity context = this.currentActivity.get();
-      Toast.makeText(context, "stopped", Toast.LENGTH_SHORT).show();
+      //Toast.makeText(context, "stopped", Toast.LENGTH_SHORT).show();
     }
   }
 
@@ -621,13 +623,11 @@ public class FloatTools {
     }
 
     private void onClickRecord() {
-      if (touchLayerStatus == RECORDING) {
+      if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
         stopRecording();
         showInputDialog();
       } else if (touchLayerStatus == STOPPED) {
         startRecording();
-      } else {
-        completeInput();
       }
     }
 

@@ -8,6 +8,8 @@ import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import com.wyx.flex.FloatTools;
+import com.wyx.flex.util.ReflectionUtil;
+import java.lang.reflect.Field;
 import java.util.List;
 
 public class DetectionService extends AccessibilityService {
@@ -15,6 +17,7 @@ public class DetectionService extends AccessibilityService {
   final static String TAG = "DetectionService";
 
   static String foregroundPackageName;
+  long focusedEditTextId;
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
@@ -48,11 +51,39 @@ public class DetectionService extends AccessibilityService {
         break;
       case AccessibilityEvent.TYPE_VIEW_FOCUSED:
       case AccessibilityEvent.TYPE_VIEW_CLICKED:
+
+        final long viewSourceId = getViewSourceId(event);
+        if (focusedEditTextId != 0 && focusedEditTextId != viewSourceId) {
+          FloatTools.getInstance().completeInput(false);
+        }
+        focusedEditTextId = viewSourceId;
+
         if (event.getClassName().equals("android.widget.EditText")) {
           FloatTools.getInstance().startInputting();
         }
         break;
+      case AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED:
+      case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
+      case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
+      case AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED:
+        break;
+      default:
+        if (!event.getClassName().equals("android.widget.EditText")) {
+          FloatTools.getInstance().completeInput(true);
+        }
     }
+  }
+
+  private long getViewSourceId(AccessibilityEvent event) {
+    final Field mSourceNodeId = ReflectionUtil.getField(event.getSource().getClass(), "mSourceNodeId", long.class);
+    try {
+      if (mSourceNodeId != null) {
+        return (long) mSourceNodeId.get(event.getSource());
+      }
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+    }
+    return 0;
   }
 
   @Override
