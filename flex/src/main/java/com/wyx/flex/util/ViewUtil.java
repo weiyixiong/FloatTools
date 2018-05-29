@@ -2,10 +2,14 @@ package com.wyx.flex.util;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.TextView;
 import com.wyx.flex.parser.ViewParser;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -91,6 +95,27 @@ public class ViewUtil {
     Rect rect = new Rect();
     child.getGlobalVisibleRect(rect);
     return x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom;
+  }
+
+  @NonNull
+  public static WindowManager.LayoutParams createWindowLayoutParams(int gravity) {
+    WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
+    wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
+    wmParams.format = PixelFormat.RGBA_8888;
+    wmParams.gravity = gravity;
+    wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+    wmParams.x = 0;
+    wmParams.y = 0;
+    wmParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+    wmParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
+    return wmParams;
+  }
+
+  public static void hideIME(Context context, TextView view) {
+    InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+    if (imm != null && view != null) {
+      imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
   }
 
   public static void hideViews(View... btn) {

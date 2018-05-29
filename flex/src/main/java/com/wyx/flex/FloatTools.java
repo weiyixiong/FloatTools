@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.PixelFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.os.Build;
@@ -342,14 +341,6 @@ public class FloatTools {
     }
   }
 
-  private void hideIME(TextView view) {
-    Activity activity = this.currentActivity.get();
-    InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-    if (imm != null && view != null) {
-      imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-    }
-  }
-
   @NonNull
   private EditText.OnEditorActionListener getEditorActionListener() {
     return new EditText.OnEditorActionListener() {
@@ -402,7 +393,7 @@ public class FloatTools {
 
     EditText view = this.currentEditText.get();
     if (hideIME) {
-      hideIME(view);
+      ViewUtil.hideIME(getCurrentActivity(), view);
     }
     recordInputEvent(view);
     if (!completeRecord) {
@@ -459,14 +450,7 @@ public class FloatTools {
     if (touchLayerStatus == STOPPED) {
       //make floatTools on the touchLayer
       hideFloatTools();
-      WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
-      wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
-      wmParams.format = PixelFormat.RGBA_8888;
-      wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-      wmParams.gravity = Gravity.LEFT | Gravity.TOP;
-      wmParams.x = 0;
-      wmParams.y = 0;
-
+      WindowManager.LayoutParams wmParams = ViewUtil.createWindowLayoutParams(Gravity.LEFT | Gravity.TOP);
       wmParams.width = WindowManager.LayoutParams.MATCH_PARENT;
       wmParams.height = WindowManager.LayoutParams.MATCH_PARENT;
       mWindowManager.addView(touchLayer, wmParams);
@@ -538,13 +522,7 @@ public class FloatTools {
 
   private void showInputDialog() {
     Activity context = this.currentActivity.get();
-    WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
-    wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
-    wmParams.format = PixelFormat.RGBA_8888;
-    wmParams.gravity = Gravity.CENTER;
-    wmParams.x = 0;
-    wmParams.y = 0;
-    wmParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+    WindowManager.LayoutParams wmParams = ViewUtil.createWindowLayoutParams(Gravity.CENTER);
     LayoutInflater inflater = LayoutInflater.from(context);
     final ViewGroup inputDialog = (ViewGroup) inflater.inflate(R.layout.dialog_name_input, null);
     inputDialog.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
@@ -569,7 +547,6 @@ public class FloatTools {
         mWindowManager.removeView(inputDialog);
       }
     });
-
     mWindowManager.addView(inputDialog, wmParams);
   }
 
@@ -587,17 +564,8 @@ public class FloatTools {
 
   @SuppressLint("ClickableViewAccessibility")
   private void initFloatView(final Activity activity) {
-    wmParams = new WindowManager.LayoutParams();
+    wmParams = ViewUtil.createWindowLayoutParams(Gravity.START | Gravity.TOP);
     mWindowManager = (WindowManager) activity.getApplication().getSystemService(Context.WINDOW_SERVICE);
-    wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
-    wmParams.format = PixelFormat.RGBA_8888;
-    wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-    wmParams.gravity = Gravity.START | Gravity.TOP;
-    wmParams.x = 0;
-    wmParams.y = 0;
-
-    wmParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
-    wmParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
 
     LayoutInflater inflater = LayoutInflater.from(activity.getApplication());
     mFloatLayout = (RelativeLayout) inflater.inflate(R.layout.float_tool_bar, null);
