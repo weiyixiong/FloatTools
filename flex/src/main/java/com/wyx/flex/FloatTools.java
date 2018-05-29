@@ -1,5 +1,6 @@
 package com.wyx.flex;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
@@ -83,7 +84,6 @@ public class FloatTools {
   private Button btnTrigger;
   private Button btnRecord;
   private Button btnReplay;
-  private ImageView dragArea;
   private TextView logInfo;
   private ScrollView logCatWrapper;
   private static Handler autoRunControlHandler;
@@ -192,12 +192,118 @@ public class FloatTools {
     this.currentActivity = new WeakReference<>(activity);
   }
 
-  public void showFloatTools() {
-    if (floatViewStatus == View.INVISIBLE) {
-      mWindowManager.addView(mFloatLayout, wmParams);
-      floatViewStatus = View.VISIBLE;
+  private View.OnClickListener floatButtonsOnClickListener = new View.OnClickListener() {
+    @Override
+    public void onClick(View v) {
+      int viewId = v.getId();
+      if (viewId == R.id.btn_logcat) {
+        onClickLogCat();
+      } else if (viewId == R.id.tv_loginfo) {
+        onClickLogInfo();
+      } else if (viewId == R.id.btn_hide) {
+        onClickHide();
+      } else if (viewId == R.id.btn_record) {
+        onClickRecord();
+      } else if (viewId == R.id.btn_replay) {
+        onClickReplay();
+      } else if (viewId == R.id.btn_debug) {
+        onCLickDebug();
+      }
     }
-  }
+
+    private void onCLickDebug() {
+      Activity activity = getCurrentActivity();
+      ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
+      DragLayout parent = root.findViewWithTag(TAG);
+      if (parent == null) {
+        parent = new DragLayout(activity);
+        parent.setTag(TAG);
+      }
+      if (parent.getChildCount() != 0) {
+        resetDebug();
+        btnDebug.setText(R.string.text_debug);
+        return;
+      }
+      btnDebug.setText(R.string.text_reset);
+      parent.removeAllViews();
+      root.removeView(parent);
+      parent.setBackgroundColor(Color.WHITE);
+      parent.removeAllViews();
+      try {
+        final ArrayList<View> views = getAppAllViews();
+        for (View view : views) {
+          if (view == mFloatLayout) {
+            continue;
+          }
+          ViewUtil.dumpView((ViewGroup) view, activity);
+          addFakeView(activity, parent, (ViewGroup) view, 0, 0);
+        }
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+      }
+      root.addView(parent);
+    }
+
+    private void resetDebug() {
+      Activity activity = getCurrentActivity();
+      Intent intent = new Intent();
+      intent.setAction(RESET);
+      application.sendBroadcast(intent);
+
+      ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
+      if (root.findViewWithTag(TAG) == null) {
+        FrameLayout parent = new FrameLayout(activity);
+        parent.setTag(TAG);
+        root.addView(parent);
+      }
+      FrameLayout parent = root.findViewWithTag(TAG);
+      parent.setBackgroundColor(Color.WHITE);
+      parent.removeAllViews();
+      root.removeView(parent);
+    }
+
+    private void onClickReplay() {
+      EventInput.replay(getCurrentActivity());
+    }
+
+    private void onClickRecord() {
+      Activity activity = getCurrentActivity();
+      if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
+        AccessibilityUtil.openSetting(activity);
+        return;
+      }
+
+      if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
+        stopRecording();
+        showInputDialog();
+        ViewUtil.showViews(btnDebug, btnHide, btnLogcat, btnReplay, btnTrigger);
+        updateViewVisible();
+      } else if (touchLayerStatus == STOPPED) {
+        startRecording();
+        ViewUtil.hideViews(btnDebug, btnHide, btnLogcat, btnReplay, btnTrigger);
+      }
+    }
+
+    private void onClickHide() {
+      hideFloatTools();
+      resetDebug();
+    }
+
+    private void onClickLogInfo() {
+      onClickLogCat();
+      Navgation.startLogCatActivity(getCurrentActivity());
+    }
+
+    private void onClickLogCat() {
+      if (logInfo.isShown()) {
+        logCatWrapper.setVisibility(View.GONE);
+        LogCatUtil.removeUpdateListener(logcatUpdateListener);
+      } else {
+        logCatWrapper.setVisibility(View.VISIBLE);
+        LogCatUtil.addUpdateListener(logcatUpdateListener);
+      }
+    }
+  };
 
   private void createFloatView() {
     Activity activity = this.currentActivity.get();
@@ -224,25 +330,19 @@ public class FloatTools {
     }
   }
 
-  public void hideIME(TextView view) {
+  private void showFloatTools() {
+    if (floatViewStatus == View.INVISIBLE) {
+      mWindowManager.addView(mFloatLayout, wmParams);
+      floatViewStatus = View.VISIBLE;
+    }
+  }
+
+  private void hideIME(TextView view) {
     Activity activity = this.currentActivity.get();
     InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
     if (imm != null && view != null) {
       imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
-  }
-
-  public void setEditorListener() {
-    List<View> allChildViews = ViewUtil.getAllChildViews(this.currentActivity.get());
-    for (View allChildView : allChildViews) {
-      if (allChildView instanceof EditText) {
-        final EditText editText = (EditText) allChildView;
-        editText.addTextChangedListener(getWatcher(editText));
-        editText.setOnEditorActionListener(getEditorActionListener());
-      }
-    }
-    touchLayerStatus = INPUTTING;
-    updateRecordBthText();
   }
 
   @NonNull
@@ -316,7 +416,23 @@ public class FloatTools {
     }
   }
 
-  public void startRecording() {
+  private void setEditorListener() {
+    List<View> allChildViews = ViewUtil.getAllChildViews(this.currentActivity.get());
+    for (View allChildView : allChildViews) {
+      if (allChildView instanceof EditText) {
+        final EditText editText = (EditText) allChildView;
+        editText.addTextChangedListener(getWatcher(editText));
+        editText.setOnEditorActionListener(getEditorActionListener());
+      }
+    }
+    touchLayerStatus = INPUTTING;
+    updateRecordBthText();
+  }
+
+  private Rect touchArea = new Rect();
+
+  @SuppressLint("ClickableViewAccessibility")
+  private void startRecording() {
     Activity activity = getCurrentActivity();
     if (touchLayer == null) {
       touchLayer = new FrameLayout(activity.getApplicationContext());
@@ -328,13 +444,13 @@ public class FloatTools {
           MotionEvent ev =
               EventInput.buildEvent(motionEvent.getAction(), motionEvent.getEventTime(), motionEvent.getRawX(),
                                     motionEvent.getRawY(), motionEvent.getPressure());
-          //currentActivity.get().dispatchTouchEvent(ev);
           dispatchTouchEvents(ev);
           EventInput.recordMotionEvent(ev);
           return false;
         }
       });
     }
+
     if (touchLayerStatus == STOPPED || touchLayerStatus == INPUTTING) {
       //make floatTools on the touchLayer
       hideFloatTools();
@@ -357,14 +473,12 @@ public class FloatTools {
     }
   }
 
-  private Rect touchArea = new Rect();
-
   private void dispatchTouchEvents(MotionEvent ev) {
     try {
       int rawX = (int) ev.getRawX();
       int rawY = (int) ev.getRawY();
       final ArrayList<View> views = getAppAllViews();
-      final Class<?> viewRootImpl = Class.forName("android.view.ViewRootImpl");
+      final Class<?> viewRootImpl = ReflectionUtil.getClass("android.view.ViewRootImpl");
       final Field mWinFrame = ReflectionUtil.getField(viewRootImpl, "mWinFrame", Rect.class);
       for (int i = views.size() - 1; i >= 0; i--) {
         final View view = views.get(i);
@@ -383,40 +497,40 @@ public class FloatTools {
         rawY = (int) ev.getRawY();
         if (view != touchLayer && view != mFloatLayout && touchArea.contains(rawX, rawY)) {
           view.dispatchTouchEvent(ev);
-          return;
         }
       }
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
     } catch (IllegalAccessException e) {
       e.printStackTrace();
     }
   }
 
-  private ArrayList<View> getAppAllViews() throws ClassNotFoundException, IllegalAccessException {
-    final Class<?> windowManagerImpl = Class.forName("android.view.WindowManagerImpl");
-    final Class<?> windowManagerGlobal = Class.forName("android.view.WindowManagerGlobal");
+  private ArrayList<View> getAppAllViews() throws IllegalAccessException {
+
+    final Class<?> windowManagerImpl = ReflectionUtil.getClass("android.view.WindowManagerImpl");
+    final Class<?> windowManagerGlobal = ReflectionUtil.getClass("android.view.WindowManagerGlobal");
     final Field mGlobal = ReflectionUtil.getField(windowManagerImpl, "mGlobal", windowManagerGlobal);
     final Object global = mGlobal.get(currentActivity.get().getSystemService(Context.WINDOW_SERVICE));
     final Field mViews = ReflectionUtil.getField(windowManagerGlobal, "mViews", ArrayList.class);
     return (ArrayList<View>) mViews.get(global);
   }
 
-  public void stopRecording() {
+  private void stopRecording() {
     if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
       if (touchLayerStatus == RECORDING) {
-        mWindowManager.removeView(touchLayer);
+        if (touchLayer.getParent() != null) {
+          mWindowManager.removeView(touchLayer);
+        }
       } else {
         completeInput(true, true);
       }
       touchLayerStatus = STOPPED;
       updateRecordBthText();
-      Activity context = this.currentActivity.get();
+      //Activity context = this.currentActivity.get();
       //Toast.makeText(context, "stopped", Toast.LENGTH_SHORT).show();
     }
   }
 
-  private Activity showInputDialog() {
+  private void showInputDialog() {
     Activity context = this.currentActivity.get();
     WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
     wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
@@ -429,9 +543,9 @@ public class FloatTools {
     final ViewGroup inputDialog = (ViewGroup) inflater.inflate(R.layout.dialog_name_input, null);
     inputDialog.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-    Button cancel = (Button) inputDialog.findViewById(R.id.btn_cancel);
-    Button ok = (Button) inputDialog.findViewById(R.id.btn_ok);
-    final EditText recordName = (EditText) inputDialog.findViewById(R.id.text_record_name);
+    Button cancel = inputDialog.findViewById(R.id.btn_cancel);
+    Button ok = inputDialog.findViewById(R.id.btn_ok);
+    final EditText recordName = inputDialog.findViewById(R.id.text_record_name);
     recordName.setContentDescription(TAG);
     cancel.setContentDescription(TAG);
     ok.setContentDescription(TAG);
@@ -451,14 +565,6 @@ public class FloatTools {
     });
 
     mWindowManager.addView(inputDialog, wmParams);
-    return context;
-  }
-
-  public void startInputting() {
-    if (touchLayerStatus == RECORDING) {
-      stopRecording();
-      setEditorListener();
-    }
   }
 
   public static boolean isSoftKeyboardFinishedAction(TextView view, int action, KeyEvent event) {
@@ -467,14 +573,21 @@ public class FloatTools {
         action == EditorInfo.IME_ACTION_SEND) && (event == null || event.getAction() == KeyEvent.ACTION_DOWN);
   }
 
+  public void startInput() {
+    if (touchLayerStatus == RECORDING) {
+      stopRecording();
+      setEditorListener();
+    }
+  }
+
+  @SuppressLint("ClickableViewAccessibility")
   private void initFloatView(final Activity activity) {
     wmParams = new WindowManager.LayoutParams();
-    mWindowManager =
-        (WindowManager) activity.getApplication().getSystemService(activity.getApplication().WINDOW_SERVICE);
+    mWindowManager = (WindowManager) activity.getApplication().getSystemService(Context.WINDOW_SERVICE);
     wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
     wmParams.format = PixelFormat.RGBA_8888;
     wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-    wmParams.gravity = Gravity.LEFT | Gravity.TOP;
+    wmParams.gravity = Gravity.START | Gravity.TOP;
     wmParams.x = 0;
     wmParams.y = 0;
 
@@ -483,15 +596,15 @@ public class FloatTools {
 
     LayoutInflater inflater = LayoutInflater.from(activity.getApplication());
     mFloatLayout = (RelativeLayout) inflater.inflate(R.layout.float_tool_bar, null);
-    btnDebug = (Button) mFloatLayout.findViewById(R.id.btn_debug);
-    btnHide = (Button) mFloatLayout.findViewById(R.id.btn_hide);
-    btnLogcat = (Button) mFloatLayout.findViewById(R.id.btn_logcat);
-    btnTrigger = (Button) mFloatLayout.findViewById(R.id.btn_trigger_event);
-    btnRecord = (Button) mFloatLayout.findViewById(R.id.btn_record);
-    btnReplay = (Button) mFloatLayout.findViewById(R.id.btn_replay);
-    dragArea = (ImageView) mFloatLayout.findViewById(R.id.drag_area);
-    logInfo = (TextView) mFloatLayout.findViewById(R.id.tv_loginfo);
-    logCatWrapper = (ScrollView) mFloatLayout.findViewById(R.id.layout_loginfo_wrapper);
+    btnDebug = mFloatLayout.findViewById(R.id.btn_debug);
+    btnHide = mFloatLayout.findViewById(R.id.btn_hide);
+    btnLogcat = mFloatLayout.findViewById(R.id.btn_logcat);
+    btnTrigger = mFloatLayout.findViewById(R.id.btn_trigger_event);
+    btnRecord = mFloatLayout.findViewById(R.id.btn_record);
+    btnReplay = mFloatLayout.findViewById(R.id.btn_replay);
+    ImageView dragArea = mFloatLayout.findViewById(R.id.drag_area);
+    logInfo = mFloatLayout.findViewById(R.id.tv_loginfo);
+    logCatWrapper = mFloatLayout.findViewById(R.id.layout_loginfo_wrapper);
 
     updateViewVisible();
 
@@ -542,8 +655,6 @@ public class FloatTools {
           wmParams.x += (x - touchDownPoint.x);
           wmParams.y += (y - touchDownPoint.y);
           mWindowManager.updateViewLayout(mFloatLayout, wmParams);
-
-          L.e(wmParams.x + "  " + x + " " + touchDownPoint.x);
           touchDownPoint.set(x, y);
         }
         return false;
@@ -552,121 +663,6 @@ public class FloatTools {
     mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
   }
-
-  private View.OnClickListener floatButtonsOnClickListener = new View.OnClickListener() {
-    @Override
-    public void onClick(View v) {
-      int viewId = v.getId();
-      if (viewId == R.id.btn_logcat) {
-        onClickLogCat();
-      } else if (viewId == R.id.tv_loginfo) {
-        onClickLogInfo();
-      } else if (viewId == R.id.btn_hide) {
-        onClickHide();
-      } else if (viewId == R.id.btn_record) {
-        onClickRecord();
-      } else if (viewId == R.id.btn_replay) {
-        onClickReplay();
-      } else if (viewId == R.id.btn_debug) {
-        onCLickDebug();
-      }
-    }
-
-    private void onCLickDebug() {
-      Activity activity = getCurrentActivity();
-      ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
-      DragLayout parent = (DragLayout) root.findViewWithTag(TAG);
-      if (parent == null) {
-        parent = new DragLayout(activity);
-        parent.setTag(TAG);
-      }
-      if (parent.getChildCount() != 0) {
-        resetDebug();
-        btnDebug.setText(R.string.text_debug);
-        return;
-      }
-      btnDebug.setText(R.string.text_reset);
-      parent.removeAllViews();
-      root.removeView(parent);
-      parent.setBackgroundColor(Color.WHITE);
-      parent.removeAllViews();
-      try {
-        final ArrayList<View> views = getAppAllViews();
-        for (View view : views) {
-          if (view == mFloatLayout) {
-            continue;
-          }
-          ViewUtil.dumpView((ViewGroup) view, activity);
-          addFakeView(activity, parent, (ViewGroup) view, 0, 0);
-        }
-      } catch (ClassNotFoundException e) {
-        e.printStackTrace();
-      } catch (IllegalAccessException e) {
-        e.printStackTrace();
-      }
-      root.addView(parent);
-    }
-
-    private void resetDebug() {
-      Activity activity = getCurrentActivity();
-      Intent intent = new Intent();
-      intent.setAction(RESET);
-      application.sendBroadcast(intent);
-
-      ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
-      if (root.findViewWithTag(TAG) == null) {
-        FrameLayout parent = new FrameLayout(activity);
-        parent.setTag(TAG);
-        root.addView(parent);
-      }
-      FrameLayout parent = (FrameLayout) root.findViewWithTag(TAG);
-      parent.setBackgroundColor(Color.WHITE);
-      parent.removeAllViews();
-      root.removeView(parent);
-    }
-
-    private void onClickReplay() {
-      EventInput.replay(getCurrentActivity());
-    }
-
-    private void onClickRecord() {
-      Activity activity = getCurrentActivity();
-      if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
-        AccessibilityUtil.openSetting(activity);
-        return;
-      }
-
-      if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
-        stopRecording();
-        showInputDialog();
-        ViewUtil.showViews(btnDebug, btnHide, btnLogcat, btnReplay, btnTrigger);
-        updateViewVisible();
-      } else if (touchLayerStatus == STOPPED) {
-        startRecording();
-        ViewUtil.hideViews(btnDebug, btnHide, btnLogcat, btnReplay, btnTrigger);
-      }
-    }
-
-    private void onClickHide() {
-      hideFloatTools();
-      resetDebug();
-    }
-
-    private void onClickLogInfo() {
-      onClickLogCat();
-      Navgation.startLogCatActivity(getCurrentActivity());
-    }
-
-    private void onClickLogCat() {
-      if (logInfo.isShown()) {
-        logCatWrapper.setVisibility(View.GONE);
-        LogCatUtil.removeUpdateListener(logcatUpdateListener);
-      } else {
-        logCatWrapper.setVisibility(View.VISIBLE);
-        LogCatUtil.addUpdateListener(logcatUpdateListener);
-      }
-    }
-  };
 
   private void updateViewVisible() {
     if (config.isLogCatEnabled()) {
@@ -703,14 +699,17 @@ public class FloatTools {
 
   public void onTouch(MotionEvent event) {
     dispatchTouchEvents(event);
-    //getCurrentActivity().dispatchTouchEvent(event);
   }
 
   public void onEdit(RecordEvent event) {
     Activity activity = this.currentActivity.get();
     if (event.getResName() != null) {
       int identifier = activity.getResources().getIdentifier(event.getResName(), null, null);
-      EditText editText = (EditText) activity.findViewById(identifier);
+      EditText editText = activity.findViewById(identifier);
+      if (editText == null) {
+        Toast.makeText(activity, "未找到相应的输入框，回放异常终止", Toast.LENGTH_LONG).show();
+        return;
+      }
       editText.setText(event.getText());
     } else {
       List<View> allChildViews = ViewUtil.getAllChildViews(activity);

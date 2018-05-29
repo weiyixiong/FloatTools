@@ -63,7 +63,7 @@ public class DetectionService extends AccessibilityService {
         focusedEditTextId = viewSourceId;
 
         if (event.getClassName().equals("android.widget.EditText")) {
-          FloatTools.getInstance().startInputting();
+          FloatTools.getInstance().startInput();
         }
         break;
       case AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED:
