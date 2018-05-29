@@ -78,7 +78,6 @@ public class FloatTools {
   private WindowManager.LayoutParams wmParams;
   private WindowManager mWindowManager;
   private Button btnDebug;
-  private Button btnReset;
   private Button btnHide;
   private Button btnLogcat;
   private Button btnTrigger;
@@ -285,9 +284,9 @@ public class FloatTools {
 
   private void updateRecordBthText() {
     if (touchLayerStatus == STOPPED) {
-      btnRecord.setText("Record");
+      btnRecord.setText(R.string.text_record);
     } else if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
-      btnRecord.setText("stop");
+      btnRecord.setText(R.string.text_stop);
     }
   }
 
@@ -336,29 +335,25 @@ public class FloatTools {
         }
       });
     }
-    if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
-      AccessibilityUtil.openSetting(activity);
-    } else {
-      if (touchLayerStatus == STOPPED || touchLayerStatus == INPUTTING) {
-        //make floatTools on the touchLayer
-        hideFloatTools();
-        WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
-        wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
-        wmParams.format = PixelFormat.RGBA_8888;
-        wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-        wmParams.gravity = Gravity.LEFT | Gravity.TOP;
-        wmParams.x = 0;
-        wmParams.y = 0;
+    if (touchLayerStatus == STOPPED || touchLayerStatus == INPUTTING) {
+      //make floatTools on the touchLayer
+      hideFloatTools();
+      WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
+      wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
+      wmParams.format = PixelFormat.RGBA_8888;
+      wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+      wmParams.gravity = Gravity.LEFT | Gravity.TOP;
+      wmParams.x = 0;
+      wmParams.y = 0;
 
-        wmParams.width = WindowManager.LayoutParams.MATCH_PARENT;
-        wmParams.height = WindowManager.LayoutParams.MATCH_PARENT;
-        mWindowManager.addView(touchLayer, wmParams);
-        showFloatTools();
-        touchLayerStatus = RECORDING;
-        EventInput.setStartActivityName(activity.getClass().getName());
-        Toast.makeText(this.currentActivity.get(), "started", Toast.LENGTH_SHORT).show();
-        updateRecordBthText();
-      }
+      wmParams.width = WindowManager.LayoutParams.MATCH_PARENT;
+      wmParams.height = WindowManager.LayoutParams.MATCH_PARENT;
+      mWindowManager.addView(touchLayer, wmParams);
+      showFloatTools();
+      touchLayerStatus = RECORDING;
+      EventInput.setStartActivityName(activity.getClass().getName());
+      Toast.makeText(this.currentActivity.get(), "started", Toast.LENGTH_SHORT).show();
+      updateRecordBthText();
     }
   }
 
@@ -489,7 +484,6 @@ public class FloatTools {
     LayoutInflater inflater = LayoutInflater.from(activity.getApplication());
     mFloatLayout = (RelativeLayout) inflater.inflate(R.layout.float_tool_bar, null);
     btnDebug = (Button) mFloatLayout.findViewById(R.id.btn_debug);
-    btnReset = (Button) mFloatLayout.findViewById(R.id.btn_reset);
     btnHide = (Button) mFloatLayout.findViewById(R.id.btn_hide);
     btnLogcat = (Button) mFloatLayout.findViewById(R.id.btn_logcat);
     btnTrigger = (Button) mFloatLayout.findViewById(R.id.btn_trigger_event);
@@ -499,14 +493,13 @@ public class FloatTools {
     logInfo = (TextView) mFloatLayout.findViewById(R.id.tv_loginfo);
     logCatWrapper = (ScrollView) mFloatLayout.findViewById(R.id.layout_loginfo_wrapper);
 
-    initWithConfig();
+    updateViewVisible();
 
     btnLogcat.setOnClickListener(floatButtonsOnClickListener);
     logInfo.setOnClickListener(floatButtonsOnClickListener);
     btnHide.setOnClickListener(floatButtonsOnClickListener);
     btnRecord.setOnClickListener(floatButtonsOnClickListener);
     btnDebug.setOnClickListener(floatButtonsOnClickListener);
-    btnReset.setOnClickListener(floatButtonsOnClickListener);
     btnReplay.setOnClickListener(floatButtonsOnClickListener);
     logcatUpdateListener = new LogCatUtil.LogcatUpdateListener() {
       @Override
@@ -576,8 +569,6 @@ public class FloatTools {
         onClickReplay();
       } else if (viewId == R.id.btn_debug) {
         onCLickDebug();
-      } else if (viewId == R.id.btn_reset) {
-        onClickReset();
       }
     }
 
@@ -589,6 +580,12 @@ public class FloatTools {
         parent = new DragLayout(activity);
         parent.setTag(TAG);
       }
+      if (parent.getChildCount() != 0) {
+        resetDebug();
+        btnDebug.setText(R.string.text_debug);
+        return;
+      }
+      btnDebug.setText(R.string.text_reset);
       parent.removeAllViews();
       root.removeView(parent);
       parent.setBackgroundColor(Color.WHITE);
@@ -610,7 +607,7 @@ public class FloatTools {
       root.addView(parent);
     }
 
-    private void onClickReset() {
+    private void resetDebug() {
       Activity activity = getCurrentActivity();
       Intent intent = new Intent();
       intent.setAction(RESET);
@@ -633,17 +630,26 @@ public class FloatTools {
     }
 
     private void onClickRecord() {
+      Activity activity = getCurrentActivity();
+      if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
+        AccessibilityUtil.openSetting(activity);
+        return;
+      }
+
       if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
         stopRecording();
         showInputDialog();
+        ViewUtil.showViews(btnDebug, btnHide, btnLogcat, btnReplay, btnTrigger);
+        updateViewVisible();
       } else if (touchLayerStatus == STOPPED) {
         startRecording();
+        ViewUtil.hideViews(btnDebug, btnHide, btnLogcat, btnReplay, btnTrigger);
       }
     }
 
     private void onClickHide() {
       hideFloatTools();
-      btnReset.performClick();
+      resetDebug();
     }
 
     private void onClickLogInfo() {
@@ -662,7 +668,7 @@ public class FloatTools {
     }
   };
 
-  private void initWithConfig() {
+  private void updateViewVisible() {
     if (config.isLogCatEnabled()) {
       btnLogcat.setVisibility(View.VISIBLE);
     } else {

@@ -92,4 +92,16 @@ public class ViewUtil {
     child.getGlobalVisibleRect(rect);
     return x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom;
   }
+
+  public static void hideViews(View... btn) {
+    for (View view : btn) {
+      view.setVisibility(View.GONE);
+    }
+  }
+
+  public static void showViews(View... btn) {
+    for (View view : btn) {
+      view.setVisibility(View.VISIBLE);
+    }
+  }
 }
