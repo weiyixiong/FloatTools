@@ -61,7 +61,7 @@ import java.util.List;
  */
 public class FloatTools {
 
-  private static final String TAG = "FloatTools";
+  public static final String TAG = "FloatTools";
   public static final String RESET = "resetAction";
 
   private static final int RECORDING = 0;
@@ -228,7 +228,9 @@ public class FloatTools {
   public void hideIME(TextView view) {
     Activity activity = this.currentActivity.get();
     InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    if (imm != null && view != null) {
+      imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
   }
 
   public void setEditorListener() {
@@ -249,7 +251,7 @@ public class FloatTools {
     return new EditText.OnEditorActionListener() {
       public boolean onEditorAction(TextView view, int action, KeyEvent event) {
         if (isSoftKeyboardFinishedAction(view, action, event)) {
-          completeInput(view);
+          completeInput(true, false);
         }
         return false;
       }
@@ -289,8 +291,8 @@ public class FloatTools {
     }
   }
 
-  public void completeInput(boolean hideIME) {
-    if (this.currentEditText == null) {
+  public void completeInput(boolean hideIME, boolean completeRecord) {
+    if (this.currentEditText == null || touchLayerStatus != INPUTTING) {
       return;
     }
 
@@ -298,11 +300,13 @@ public class FloatTools {
     if (hideIME) {
       hideIME(view);
     }
-    completeInput(view);
+    recordInputEvent(view);
+    if (!completeRecord) {
+      startRecording();
+    }
   }
 
-  public void completeInput(TextView view) {
-
+  private void recordInputEvent(TextView view) {
     if (view.getId() == View.NO_ID) {
       Rect rect = new Rect();
       view.getGlobalVisibleRect(rect);
@@ -311,7 +315,6 @@ public class FloatTools {
       String viewId = getCurrentActivity().getResources().getResourceName(view.getId());
       EventInput.recordEditEvent(viewId, view.getText().toString());
     }
-    startRecording();
   }
 
   public void startRecording() {
@@ -405,8 +408,12 @@ public class FloatTools {
   }
 
   public void stopRecording() {
-    if (touchLayerStatus == RECORDING) {
-      mWindowManager.removeView(touchLayer);
+    if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
+      if (touchLayerStatus == RECORDING) {
+        mWindowManager.removeView(touchLayer);
+      } else {
+        completeInput(true, true);
+      }
       touchLayerStatus = STOPPED;
       updateRecordBthText();
       Activity context = this.currentActivity.get();
@@ -430,6 +437,9 @@ public class FloatTools {
     Button cancel = (Button) inputDialog.findViewById(R.id.btn_cancel);
     Button ok = (Button) inputDialog.findViewById(R.id.btn_ok);
     final EditText recordName = (EditText) inputDialog.findViewById(R.id.text_record_name);
+    recordName.setContentDescription(TAG);
+    cancel.setContentDescription(TAG);
+    ok.setContentDescription(TAG);
 
     cancel.setOnClickListener(new View.OnClickListener() {
       @Override

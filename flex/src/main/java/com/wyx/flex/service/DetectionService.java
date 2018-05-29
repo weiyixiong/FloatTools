@@ -44,6 +44,10 @@ public class DetectionService extends AccessibilityService {
    */
   @Override
   public void onAccessibilityEvent(AccessibilityEvent event) {
+    final CharSequence contentDescription = event.getContentDescription();
+    if (contentDescription != null && contentDescription.equals(FloatTools.TAG)) {
+      return;
+    }
     switch (event.getEventType()) {
       case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
         foregroundPackageName = event.getPackageName().toString();
@@ -54,7 +58,7 @@ public class DetectionService extends AccessibilityService {
 
         final long viewSourceId = getViewSourceId(event);
         if (focusedEditTextId != 0 && focusedEditTextId != viewSourceId) {
-          FloatTools.getInstance().completeInput(false);
+          FloatTools.getInstance().completeInput(false, false);
         }
         focusedEditTextId = viewSourceId;
 
@@ -69,7 +73,7 @@ public class DetectionService extends AccessibilityService {
         break;
       default:
         if (!event.getClassName().equals("android.widget.EditText")) {
-          FloatTools.getInstance().completeInput(true);
+          FloatTools.getInstance().completeInput(true, false);
         }
     }
   }
