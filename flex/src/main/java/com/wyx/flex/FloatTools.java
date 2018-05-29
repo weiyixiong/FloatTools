@@ -63,11 +63,11 @@ import java.util.List;
 public class FloatTools {
 
   public static final String TAG = "FloatTools";
+  public static final String TOUCH_LAYER_TAG = "FloatTools";
   public static final String RESET = "resetAction";
 
   private static final int RECORDING = 0;
   private static final int STOPPED = 1;
-  private static final int INPUTTING = 2;
 
   private static Application application;
   private static FloatTools instance;
@@ -273,7 +273,7 @@ public class FloatTools {
         return;
       }
 
-      if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
+      if (touchLayerStatus == RECORDING) {
         stopRecording();
         showInputDialog();
         ViewUtil.showViews(btnDebug, btnHide, btnLogcat, btnReplay, btnTrigger);
@@ -350,7 +350,7 @@ public class FloatTools {
     return new EditText.OnEditorActionListener() {
       public boolean onEditorAction(TextView view, int action, KeyEvent event) {
         if (isSoftKeyboardFinishedAction(view, action, event)) {
-          completeInput(true, false);
+          completeInput(true);
         }
         return false;
       }
@@ -385,13 +385,13 @@ public class FloatTools {
   private void updateRecordBthText() {
     if (touchLayerStatus == STOPPED) {
       btnRecord.setText(R.string.text_record);
-    } else if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
+    } else if (touchLayerStatus == RECORDING) {
       btnRecord.setText(R.string.text_stop);
     }
   }
 
-  public void completeInput(boolean hideIME, boolean completeRecord) {
-    if (this.currentEditText == null || touchLayerStatus != INPUTTING) {
+  public void completeInput(boolean hideIME) {
+    if (this.currentEditText == null) {
       return;
     }
 
@@ -400,9 +400,9 @@ public class FloatTools {
       hideIME(view);
     }
     recordInputEvent(view);
-    if (!completeRecord) {
-      startRecording();
-    }
+    //if (!completeRecord) {
+    //  startRecording();
+    //}
   }
 
   private void recordInputEvent(TextView view) {
@@ -425,7 +425,6 @@ public class FloatTools {
         editText.setOnEditorActionListener(getEditorActionListener());
       }
     }
-    touchLayerStatus = INPUTTING;
     updateRecordBthText();
   }
 
@@ -437,6 +436,7 @@ public class FloatTools {
     if (touchLayer == null) {
       touchLayer = new FrameLayout(activity.getApplicationContext());
       touchLayer.setBackgroundColor(Color.TRANSPARENT);
+      touchLayer.setTag(TOUCH_LAYER_TAG);
       touchLayer.setOnTouchListener(new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -446,25 +446,15 @@ public class FloatTools {
                                     motionEvent.getRawY(), motionEvent.getPressure());
           dispatchTouchEvents(ev);
           EventInput.recordMotionEvent(ev);
-          return false;
+          return true;
         }
       });
     }
 
-    if (touchLayerStatus == STOPPED || touchLayerStatus == INPUTTING) {
+    if (touchLayerStatus == STOPPED) {
       //make floatTools on the touchLayer
       hideFloatTools();
-      WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
-      wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
-      wmParams.format = PixelFormat.RGBA_8888;
-      wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-      wmParams.gravity = Gravity.LEFT | Gravity.TOP;
-      wmParams.x = 0;
-      wmParams.y = 0;
-
-      wmParams.width = WindowManager.LayoutParams.MATCH_PARENT;
-      wmParams.height = WindowManager.LayoutParams.MATCH_PARENT;
-      mWindowManager.addView(touchLayer, wmParams);
+      getActivityRootView().addView(touchLayer);
       showFloatTools();
       touchLayerStatus = RECORDING;
       EventInput.setStartActivityName(activity.getClass().getName());
@@ -496,7 +486,15 @@ public class FloatTools {
         rawX = (int) ev.getRawX();
         rawY = (int) ev.getRawY();
         if (view != touchLayer && view != mFloatLayout && touchArea.contains(rawX, rawY)) {
-          view.dispatchTouchEvent(ev);
+          if (view.findViewWithTag(TOUCH_LAYER_TAG) != null) {
+            ((ViewGroup) view).getChildAt(0).dispatchTouchEvent(ev);
+          } else {
+            view.dispatchTouchEvent(ev);
+          }
+        }
+        if (this.currentEditText != null) {
+          completeInput(false);
+          this.currentEditText = null;
         }
       }
     } catch (IllegalAccessException e) {
@@ -505,7 +503,6 @@ public class FloatTools {
   }
 
   private ArrayList<View> getAppAllViews() throws IllegalAccessException {
-
     final Class<?> windowManagerImpl = ReflectionUtil.getClass("android.view.WindowManagerImpl");
     final Class<?> windowManagerGlobal = ReflectionUtil.getClass("android.view.WindowManagerGlobal");
     final Field mGlobal = ReflectionUtil.getField(windowManagerImpl, "mGlobal", windowManagerGlobal);
@@ -515,14 +512,8 @@ public class FloatTools {
   }
 
   private void stopRecording() {
-    if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
-      if (touchLayerStatus == RECORDING) {
-        if (touchLayer.getParent() != null) {
-          mWindowManager.removeView(touchLayer);
-        }
-      } else {
-        completeInput(true, true);
-      }
+    if (touchLayerStatus == RECORDING) {
+      getActivityRootView().removeView(touchLayer);
       touchLayerStatus = STOPPED;
       updateRecordBthText();
       //Activity context = this.currentActivity.get();
@@ -575,7 +566,7 @@ public class FloatTools {
 
   public void startInput() {
     if (touchLayerStatus == RECORDING) {
-      stopRecording();
+      //stopRecording();
       setEditorListener();
     }
   }
@@ -741,6 +732,10 @@ public class FloatTools {
       throw new RuntimeException("have not setup activity or activity had recycled");
     }
     return activity;
+  }
+
+  public ViewGroup getActivityRootView() {
+    return (ViewGroup) getCurrentActivity().getWindow().getDecorView();
   }
 
   private void addFakeView(final Activity activity, ViewGroup parent, ViewGroup origin, int top, int left) {

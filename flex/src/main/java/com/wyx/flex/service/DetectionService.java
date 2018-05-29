@@ -58,7 +58,7 @@ public class DetectionService extends AccessibilityService {
 
         final long viewSourceId = getViewSourceId(event);
         if (focusedEditTextId != 0 && focusedEditTextId != viewSourceId) {
-          FloatTools.getInstance().completeInput(false, false);
+          FloatTools.getInstance().completeInput(false);
         }
         focusedEditTextId = viewSourceId;
 
@@ -73,7 +73,7 @@ public class DetectionService extends AccessibilityService {
         break;
       default:
         if (!event.getClassName().equals("android.widget.EditText")) {
-          FloatTools.getInstance().completeInput(true, false);
+          FloatTools.getInstance().completeInput(true);
         }
     }
   }
