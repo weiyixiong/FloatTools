@@ -18,12 +18,14 @@ import android.support.annotation.NonNull;
 import android.support.v4.view.InputDeviceCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -49,11 +51,14 @@ import com.wyx.flex.util.PrefUtil;
 import com.wyx.flex.util.ReflectionUtil;
 import com.wyx.flex.util.ShakeDetector;
 import com.wyx.flex.util.ShakeDetectorUtil;
+import com.wyx.flex.util.StatusBarHeightUtil;
 import com.wyx.flex.util.ViewUtil;
 import com.wyx.flex.view.BorderImageView;
 import com.wyx.flex.view.DragLayout;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -451,7 +456,7 @@ public class FloatTools {
       });
     }
 
-    if (touchLayerStatus == STOPPED || touchLayerStatus == INPUTTING) {
+    if (touchLayerStatus == STOPPED) {
       //make floatTools on the touchLayer
       hideFloatTools();
       WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
@@ -498,6 +503,10 @@ public class FloatTools {
         if (view != touchLayer && view != mFloatLayout && touchArea.contains(rawX, rawY)) {
           view.dispatchTouchEvent(ev);
         }
+        if (this.currentEditText != null) {
+          completeInput(false, false);
+          this.currentEditText = null;
+        }
       }
     } catch (IllegalAccessException e) {
       e.printStackTrace();
@@ -516,14 +525,11 @@ public class FloatTools {
 
   private void stopRecording() {
     if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
-      if (touchLayerStatus == RECORDING) {
-        if (touchLayer.getParent() != null) {
-          mWindowManager.removeView(touchLayer);
-        }
-      } else {
-        completeInput(true, true);
+      if (touchLayer.getParent() != null) {
+        mWindowManager.removeView(touchLayer);
       }
       touchLayerStatus = STOPPED;
+      completeInput(true, true);
       updateRecordBthText();
       //Activity context = this.currentActivity.get();
       //Toast.makeText(context, "stopped", Toast.LENGTH_SHORT).show();
@@ -575,7 +581,6 @@ public class FloatTools {
 
   public void startInput() {
     if (touchLayerStatus == RECORDING) {
-      stopRecording();
       setEditorListener();
     }
   }
@@ -662,6 +667,36 @@ public class FloatTools {
     });
     mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+
+    getCurrentActivity().getWindow()
+                        .getDecorView()
+                        .getViewTreeObserver()
+                        .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                          @Override
+                          public void onGlobalLayout() {
+                            if (touchLayer == null || touchLayer.getParent() == null) {
+                              return;
+                            }
+                            final InputMethodManager systemService =
+                                (InputMethodManager) getCurrentActivity().getSystemService(
+                                    Context.INPUT_METHOD_SERVICE);
+                            final Method getInputMethodWindowVisibleHeight =
+                                ReflectionUtil.getMethod("getInputMethodWindowVisibleHeight", InputMethodManager.class);
+                            try {
+                              DisplayMetrics displaymetrics = new DisplayMetrics();
+                              mWindowManager.getDefaultDisplay().getMetrics(displaymetrics);
+                              final ViewGroup.LayoutParams layoutParams = touchLayer.getLayoutParams();
+                              final int keyboardHeight = (int) getInputMethodWindowVisibleHeight.invoke(systemService);
+                              layoutParams.height = displaymetrics.heightPixels - keyboardHeight -
+                                  StatusBarHeightUtil.getStatusBarHeight(getCurrentActivity());
+                              mWindowManager.updateViewLayout(touchLayer, layoutParams);
+                            } catch (IllegalAccessException e) {
+                              e.printStackTrace();
+                            } catch (InvocationTargetException e) {
+                              e.printStackTrace();
+                            }
+                          }
+                        });
   }
 
   private void updateViewVisible() {
