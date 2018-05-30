@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -95,7 +96,7 @@ public class RecordActivity extends AppCompatActivity {
         final Record item = getItemByViewTag(v);
         EventInput.installRecord(item);
         AlertDialog.Builder builder = new AlertDialog.Builder(RecordActivity.this);
-        builder.setMessage("是否在应用启动时自动运行？");
+        builder.setMessage(Html.fromHtml("<font color='#666666'>是否在应用启动时自动运行？</font>"));
         builder.setTitle("提示");
         builder.setPositiveButton("是", new DialogInterface.OnClickListener() {
           @Override
@@ -114,7 +115,8 @@ public class RecordActivity extends AppCompatActivity {
             dialog.dismiss();
           }
         });
-        builder.create().show();
+        final AlertDialog alertDialog = builder.create();
+        alertDialog.show();
       }
     };
     View.OnClickListener deleteOnClick = new View.OnClickListener() {

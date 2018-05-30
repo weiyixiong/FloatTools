@@ -134,92 +134,6 @@ public class FloatTools {
         }
       };
 
-  public static void init(Application application) {
-    Configuration dbConfiguration = new Configuration.Builder(application).setDatabaseName("Record.db")
-                                                                          .setModelClasses(Record.class,
-                                                                                           RecordEvent.class)
-                                                                          .create();
-    autoRunControlHandler = new Handler();
-    ActiveAndroid.initialize(dbConfiguration);
-    PrefUtil.init(application);
-    ShakeDetectorUtil.init(application);
-    FloatTools.application = application;
-    instance = new FloatTools();
-    application.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
-      @Override
-      public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-
-      }
-
-      @Override
-      public void onActivityStarted(Activity activity) {
-
-      }
-
-      @Override
-      public void onActivityResumed(Activity activity) {
-        instance.setAndDumpActivity(activity);
-        if (recordingStatus == RECORDING) {
-          instance.installLayer(activity);
-        }
-        Record recordById = Record.getRecordById(PrefUtil.getCurrentPlayID());
-        EventInput.installRecord(recordById);
-        if (!startReplayed && PrefUtil.isPlayRecordOnLaunch()) {
-          autoRunControlHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-              startReplayed = true;
-              EventInput.replay(instance.getCurrentActivity());
-            }
-          }, 3000);
-        }
-        if (onActivityResumedListener != null) {
-          onActivityResumedListener.OnActivityResumed();
-          onActivityResumedListener = null;
-        }
-      }
-
-      @Override
-      public void onActivityPaused(Activity activity) {
-        if (instance.touchLayerStatus == RECORDING) {
-          recordingStatus = RECORDING;
-          instance.hideFloatTools();
-          instance.stopRecording();
-        } else {
-          recordingStatus = STOPPED;
-        }
-        if (autoRunControlHandler.hasMessages(0)) {
-          autoRunControlHandler.removeCallbacksAndMessages(0);
-        }
-      }
-
-      @Override
-      public void onActivityStopped(Activity activity) {
-
-      }
-
-      @Override
-      public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-
-      }
-
-      @Override
-      public void onActivityDestroyed(Activity activity) {
-
-      }
-    });
-  }
-
-  private void setAndDumpActivity(Activity activity) {
-    this.currentActivity = new WeakReference<>(activity);
-    createFloatView();
-    activity.getWindow().getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(adjustLayerByKeyBoardHeight);
-  }
-
-  public static FloatTools getInstance() {
-    return instance;
-  }
-
   private View.OnClickListener floatButtonsOnClickListener = new View.OnClickListener() {
     @Override
     public void onClick(View v) {
@@ -300,13 +214,13 @@ public class FloatTools {
         AccessibilityUtil.openSetting(activity);
         return;
       }
-
       if (touchLayerStatus == RECORDING || touchLayerStatus == INPUTTING) {
         stopRecording();
         showInputDialog();
         ViewUtil.showViews(btnDebug, btnHide, btnLogcat, btnReplay, btnTrigger);
         updateViewVisible();
       } else if (touchLayerStatus == STOPPED) {
+        EventInput.setStartActivityName(activity.getClass().getName());
         startRecording();
         ViewUtil.hideViews(btnDebug, btnHide, btnLogcat, btnReplay, btnTrigger);
       }
@@ -332,6 +246,93 @@ public class FloatTools {
       }
     }
   };
+
+  private void setAndDumpActivity(Activity activity) {
+    this.currentActivity = new WeakReference<>(activity);
+    createFloatView();
+    activity.getWindow().getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(adjustLayerByKeyBoardHeight);
+  }
+
+  public static FloatTools getInstance() {
+    return instance;
+  }
+
+  public static void init(Application application) {
+    Configuration dbConfiguration = new Configuration.Builder(application).setDatabaseName("Record.db")
+                                                                          .setModelClasses(Record.class,
+                                                                                           RecordEvent.class)
+                                                                          .create();
+    autoRunControlHandler = new Handler();
+    ActiveAndroid.initialize(dbConfiguration);
+    PrefUtil.init(application);
+    ShakeDetectorUtil.init(application);
+    FloatTools.application = application;
+    instance = new FloatTools();
+    application.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+      @Override
+      public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+
+      }
+
+      @Override
+      public void onActivityStarted(Activity activity) {
+
+      }
+
+      @Override
+      public void onActivityResumed(Activity activity) {
+        instance.setAndDumpActivity(activity);
+        if (recordingStatus == RECORDING) {
+          instance.installLayer(activity);
+        }
+        if (!startReplayed && PrefUtil.isPlayRecordOnLaunch()) {
+          Record recordById = Record.getRecordById(PrefUtil.getCurrentPlayID());
+          EventInput.installRecord(recordById);
+
+          autoRunControlHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+              startReplayed = true;
+              EventInput.replay(instance.getCurrentActivity());
+            }
+          }, 3000);
+        }
+        if (onActivityResumedListener != null) {
+          onActivityResumedListener.OnActivityResumed();
+          onActivityResumedListener = null;
+        }
+      }
+
+      @Override
+      public void onActivityPaused(Activity activity) {
+        if (instance.touchLayerStatus == RECORDING) {
+          recordingStatus = RECORDING;
+          instance.hideFloatTools();
+          instance.stopRecording();
+        } else {
+          recordingStatus = STOPPED;
+        }
+        if (autoRunControlHandler.hasMessages(0)) {
+          autoRunControlHandler.removeCallbacksAndMessages(0);
+        }
+      }
+
+      @Override
+      public void onActivityStopped(Activity activity) {
+
+      }
+
+      @Override
+      public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+
+      }
+
+      @Override
+      public void onActivityDestroyed(Activity activity) {
+
+      }
+    });
+  }
 
   private void createFloatView() {
     Activity activity = this.currentActivity.get();
@@ -481,7 +482,6 @@ public class FloatTools {
       mWindowManager.addView(touchLayer, wmParams);
       showFloatTools();
       touchLayerStatus = RECORDING;
-      EventInput.setStartActivityName(activity.getClass().getName());
       Toast.makeText(this.currentActivity.get(), "started", Toast.LENGTH_SHORT).show();
       updateRecordBthText();
     }
