@@ -2,6 +2,7 @@ package com.wyx.flexdemo;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -25,8 +26,14 @@ public class MainActivity extends AppCompatActivity {
       @Override
       public void onClick(View v) {
         dialog();
-        //Intent i = new Intent(MainActivity.this, SecondActivity.class);
-        //startActivity(i);
+      }
+    });
+    findViewById(R.id.test_btn).setOnLongClickListener(new View.OnLongClickListener() {
+      @Override
+      public boolean onLongClick(View v) {
+        Intent i = new Intent(MainActivity.this, SecondActivity.class);
+        startActivity(i);
+        return false;
       }
     });
   }

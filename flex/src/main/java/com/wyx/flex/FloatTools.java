@@ -107,6 +107,33 @@ public class FloatTools {
     void OnActivityResumed();
   }
 
+  private final ViewTreeObserver.OnGlobalLayoutListener adjustLayerByKeyBoardHeight =
+      new ViewTreeObserver.OnGlobalLayoutListener() {
+        @Override
+        public void onGlobalLayout() {
+          if (touchLayer == null || touchLayer.getParent() == null) {
+            return;
+          }
+          final InputMethodManager systemService =
+              (InputMethodManager) getCurrentActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+          final Method getInputMethodWindowVisibleHeight =
+              ReflectionUtil.getMethod("getInputMethodWindowVisibleHeight", InputMethodManager.class);
+          try {
+            DisplayMetrics displaymetrics = new DisplayMetrics();
+            mWindowManager.getDefaultDisplay().getMetrics(displaymetrics);
+            final ViewGroup.LayoutParams layoutParams = touchLayer.getLayoutParams();
+            final int keyboardHeight = (int) getInputMethodWindowVisibleHeight.invoke(systemService);
+            layoutParams.height = displaymetrics.heightPixels - keyboardHeight -
+                StatusBarHeightUtil.getStatusBarHeight(getCurrentActivity());
+            mWindowManager.updateViewLayout(touchLayer, layoutParams);
+          } catch (IllegalAccessException e) {
+            e.printStackTrace();
+          } catch (InvocationTargetException e) {
+            e.printStackTrace();
+          }
+        }
+      };
+
   public static void init(Application application) {
     Configuration dbConfiguration = new Configuration.Builder(application).setDatabaseName("Record.db")
                                                                           .setModelClasses(Record.class,
@@ -184,16 +211,13 @@ public class FloatTools {
   }
 
   private void setAndDumpActivity(Activity activity) {
-    setupActivity(activity);
+    this.currentActivity = new WeakReference<>(activity);
     createFloatView();
+    activity.getWindow().getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(adjustLayerByKeyBoardHeight);
   }
 
   public static FloatTools getInstance() {
     return instance;
-  }
-
-  private void setupActivity(final Activity activity) {
-    this.currentActivity = new WeakReference<>(activity);
   }
 
   private View.OnClickListener floatButtonsOnClickListener = new View.OnClickListener() {
@@ -430,6 +454,7 @@ public class FloatTools {
   @SuppressLint("ClickableViewAccessibility")
   private void startRecording() {
     Activity activity = getCurrentActivity();
+
     if (touchLayer == null) {
       touchLayer = new FrameLayout(activity.getApplicationContext());
       touchLayer.setBackgroundColor(Color.TRANSPARENT);
@@ -635,36 +660,6 @@ public class FloatTools {
     });
     mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-
-    getCurrentActivity().getWindow()
-                        .getDecorView()
-                        .getViewTreeObserver()
-                        .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                          @Override
-                          public void onGlobalLayout() {
-                            if (touchLayer == null || touchLayer.getParent() == null) {
-                              return;
-                            }
-                            final InputMethodManager systemService =
-                                (InputMethodManager) getCurrentActivity().getSystemService(
-                                    Context.INPUT_METHOD_SERVICE);
-                            final Method getInputMethodWindowVisibleHeight =
-                                ReflectionUtil.getMethod("getInputMethodWindowVisibleHeight", InputMethodManager.class);
-                            try {
-                              DisplayMetrics displaymetrics = new DisplayMetrics();
-                              mWindowManager.getDefaultDisplay().getMetrics(displaymetrics);
-                              final ViewGroup.LayoutParams layoutParams = touchLayer.getLayoutParams();
-                              final int keyboardHeight = (int) getInputMethodWindowVisibleHeight.invoke(systemService);
-                              layoutParams.height = displaymetrics.heightPixels - keyboardHeight -
-                                  StatusBarHeightUtil.getStatusBarHeight(getCurrentActivity());
-                              mWindowManager.updateViewLayout(touchLayer, layoutParams);
-                            } catch (IllegalAccessException e) {
-                              e.printStackTrace();
-                            } catch (InvocationTargetException e) {
-                              e.printStackTrace();
-                            }
-                          }
-                        });
   }
 
   private void updateViewVisible() {
