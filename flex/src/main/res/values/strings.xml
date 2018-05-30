@@ -8,4 +8,7 @@
   <string name="text_hide">隐藏</string>
   <string name="text_trigger">触发</string>
   <string name="text_stop">停止</string>
+  <string name="text_input_name">输入名称</string>
+  <string name="text_ok">OK</string>
+  <string name="text_cancel">Cancel</string>
 </resources>

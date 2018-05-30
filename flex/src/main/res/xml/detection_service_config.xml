@@ -8,12 +8,3 @@
     android:canRetrieveWindowContent="true"
     android:canRequestFilterKeyEvents="true"
     />
-
-    <!--<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"-->
-    <!--android:accessibilityEventTypes="typeAllMask"-->
-    <!--android:accessibilityFeedbackType="feedbackGeneric"-->
-    <!--typeWindowStateChanged|typeViewFocused|typeViewSelected|typeViewTextChanged|typeViewClicked|typeContextClicked|typeWindowContentChanged|typeWindowsChanged"-->
-    <!--android:canRetrieveWindowContent="true"-->
-    <!--android:description="@string/testaccessibility"-->
-    <!--android:packageNames="com.android.packageinstaller"-->
-    <!--android:notificationTimeout="100" />-->

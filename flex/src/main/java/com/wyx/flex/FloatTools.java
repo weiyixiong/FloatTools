@@ -549,6 +549,7 @@ public class FloatTools {
   private void showInputDialog() {
     Activity context = this.currentActivity.get();
     WindowManager.LayoutParams wmParams = ViewUtil.createWindowLayoutParams(Gravity.CENTER);
+    wmParams.flags = 0;
     LayoutInflater inflater = LayoutInflater.from(context);
     final ViewGroup inputDialog = (ViewGroup) inflater.inflate(R.layout.dialog_name_input, null);
     inputDialog.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
