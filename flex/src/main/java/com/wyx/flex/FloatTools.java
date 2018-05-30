@@ -509,12 +509,13 @@ public class FloatTools {
         view.getGlobalVisibleRect(touchArea);
         rawX = (int) ev.getRawX();
         rawY = (int) ev.getRawY();
-        if (view != touchLayer && view != mFloatLayout && touchArea.contains(rawX, rawY)) {
-          view.dispatchTouchEvent(ev);
-        }
         if (this.currentEditText != null) {
           completeInput(false, false);
           this.currentEditText = null;
+        }
+        if (view != touchLayer && view != mFloatLayout && touchArea.contains(rawX, rawY)) {
+          view.dispatchTouchEvent(ev);
+          break;
         }
       }
     } catch (IllegalAccessException e) {
