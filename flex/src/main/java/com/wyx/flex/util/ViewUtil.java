@@ -15,6 +15,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -109,6 +110,15 @@ public class ViewUtil {
     wmParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
     wmParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
     return wmParams;
+  }
+
+  public static ArrayList<View> getActivityAllViews(WindowManager windowManager) throws IllegalAccessException {
+    final Class<?> windowManagerImpl = ReflectionUtil.getClass("android.view.WindowManagerImpl");
+    final Class<?> windowManagerGlobal = ReflectionUtil.getClass("android.view.WindowManagerGlobal");
+    final Field mGlobal = ReflectionUtil.getField(windowManagerImpl, "mGlobal", windowManagerGlobal);
+    final Object global = mGlobal.get(windowManager);
+    final Field mViews = ReflectionUtil.getField(windowManagerGlobal, "mViews", ArrayList.class);
+    return (ArrayList<View>) mViews.get(global);
   }
 
   public static void hideIME(Context context, TextView view) {
