@@ -13,6 +13,8 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.MessageQueue;
 import android.support.v4.view.InputDeviceCompat;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -250,8 +252,14 @@ public class FloatTools implements AppModel {
           autoRunControlHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-              startReplayed = true;
-              EventInput.replay(instance.getCurrentActivity());
+              Looper.myQueue().addIdleHandler(new MessageQueue.IdleHandler() {
+                @Override
+                public boolean queueIdle() {
+                  startReplayed = true;
+                  EventInput.replay(instance.getCurrentActivity());
+                  return false;
+                }
+              });
             }
           }, 3000);
         }
