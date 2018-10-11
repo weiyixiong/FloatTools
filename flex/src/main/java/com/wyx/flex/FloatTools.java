@@ -175,11 +175,6 @@ public class FloatTools implements AppModel {
 
     private void onClickRecord() {
       Activity activity = getCurrentActivity();
-      if (touchEventCollection == null) {
-        touchEventCollection = new TouchEventCollection(FloatTools.this);
-        editEventCollection = new EditEventCollection(FloatTools.this);
-      }
-
       if (!AccessibilityUtil.isAccessibilitySettingsOn(activity)) {
         AccessibilityUtil.openSetting(activity);
         return;
@@ -306,10 +301,12 @@ public class FloatTools implements AppModel {
 
   private void setAndDumpActivity(Activity activity) {
     this.currentActivity = new WeakReference<>(activity);
-    createFloatView();
-    if (touchEventCollection != null) {
-      touchEventCollection.enterNewActivity();
+    if (touchEventCollection == null) {
+      this.editEventCollection = new EditEventCollection(FloatTools.this);
+      this.touchEventCollection = new TouchEventCollection(FloatTools.this);
     }
+    createFloatView();
+    touchEventCollection.enterNewActivity();
   }
 
   private void createFloatView() {
