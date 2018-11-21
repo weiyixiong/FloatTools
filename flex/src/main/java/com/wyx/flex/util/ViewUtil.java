@@ -2,15 +2,19 @@ package com.wyx.flex.util;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
+import com.wyx.flex.FloatTools;
 import com.wyx.flex.parser.ViewParser;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -99,8 +103,26 @@ public class ViewUtil {
     return x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom;
   }
 
+  /**
+   * Android 6.0 版本及之后的跳转权限申请界面
+   *
+   * @param context 上下文
+   */
+  private static void highVersionJump2PermissionActivity(Context context) {
+    try {
+      Class clazz = Settings.class;
+      Field field = clazz.getDeclaredField("ACTION_MANAGE_OVERLAY_PERMISSION");
+      Intent intent = new Intent(field.get(null).toString());
+      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      intent.setData(Uri.parse("package:" + context.getPackageName()));
+      context.startActivity(intent);
+    } catch (Exception e) {
+    }
+  }
+
   @NonNull
   public static WindowManager.LayoutParams createWindowLayoutParams(int gravity) {
+    highVersionJump2PermissionActivity(FloatTools.getInstance().getCurrentActivity());
     WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
     wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
