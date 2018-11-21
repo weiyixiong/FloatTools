@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
@@ -102,6 +103,9 @@ public class ViewUtil {
   public static WindowManager.LayoutParams createWindowLayoutParams(int gravity) {
     WindowManager.LayoutParams wmParams = new WindowManager.LayoutParams();
     wmParams.type = WindowManager.LayoutParams.TYPE_TOAST;
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      wmParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+    }
     wmParams.format = PixelFormat.RGBA_8888;
     wmParams.gravity = gravity;
     wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
