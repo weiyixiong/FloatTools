@@ -66,9 +66,13 @@ public class DetectionService extends AccessibilityService {
           FloatTools.getInstance().startInput();
         }
         break;
+      case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
+        if (!FloatTools.getInstance().isEditingText() && event.getClassName().equals("android.widget.EditText")) {
+          FloatTools.getInstance().startInput();
+        }
+        break;
       case AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED:
       case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
-      case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
       case AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED:
         break;
       default:
@@ -79,13 +83,13 @@ public class DetectionService extends AccessibilityService {
   }
 
   private long getViewSourceId(AccessibilityEvent event) {
-    final Field mSourceNodeId = ReflectionUtil.getField(event.getSource().getClass(), "mSourceNodeId", long.class);
     try {
+      final Field mSourceNodeId = ReflectionUtil.getField(event.getSource().getClass(), "mSourceNodeId", long.class);
       if (mSourceNodeId != null) {
         return (long) mSourceNodeId.get(event.getSource());
       }
     } catch (IllegalAccessException e) {
-      e.printStackTrace();
+      //e.printStackTrace();
     }
     return 0;
   }

@@ -110,6 +110,9 @@ public class ViewUtil {
    */
   private static void highVersionJump2PermissionActivity(Context context) {
     try {
+      if (highVersionPermissionCheck(context)) {
+        return;
+      }
       Class clazz = Settings.class;
       Field field = clazz.getDeclaredField("ACTION_MANAGE_OVERLAY_PERMISSION");
       Intent intent = new Intent(field.get(null).toString());
@@ -118,6 +121,22 @@ public class ViewUtil {
       context.startActivity(intent);
     } catch (Exception e) {
     }
+  }
+
+  /**
+   * Android 6.0 版本及之后的权限判断
+   *
+   * @param context 上下文
+   * @return [ true, 有权限 ][ false, 无权限 ]
+   */
+  private static boolean highVersionPermissionCheck(Context context) {
+    try {
+      Class clazz = Settings.class;
+      Method canDrawOverlays = clazz.getDeclaredMethod("canDrawOverlays", Context.class);
+      return (Boolean) canDrawOverlays.invoke(null, context);
+    } catch (Exception e) {
+    }
+    return false;
   }
 
   @NonNull

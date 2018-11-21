@@ -95,6 +95,10 @@ public class FloatTools implements AppModel {
 
   private static OnActivityResumedListener onActivityResumedListener;
 
+  public boolean isEditingText() {
+    return editEventCollection != null && editEventCollection.isEditText();
+  }
+
   public interface OnActivityResumedListener {
     void OnActivityResumed();
   }
