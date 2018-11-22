@@ -84,6 +84,9 @@ public class DetectionService extends AccessibilityService {
 
   private long getViewSourceId(AccessibilityEvent event) {
     try {
+      if (event.getSource() == null) {
+        return 0;
+      }
       final Field mSourceNodeId = ReflectionUtil.getField(event.getSource().getClass(), "mSourceNodeId", long.class);
       if (mSourceNodeId != null) {
         return (long) mSourceNodeId.get(event.getSource());
