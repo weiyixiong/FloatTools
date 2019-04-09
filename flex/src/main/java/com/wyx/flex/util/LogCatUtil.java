@@ -14,7 +14,7 @@ import java.util.Queue;
  * Created by winney on 16/5/24.
  */
 public class LogCatUtil {
-  private static final int LIMIT_LINE = 100;
+  private static final int LIMIT_LINE = 1000;
   public static final int TIME_SCHEDULE = 3000;
   private static Queue<String> cache = new ArrayDeque<>();
 
